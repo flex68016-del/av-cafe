@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
@@ -49,6 +50,40 @@ async function main() {
   });
 
   console.log(`✅ ${products.length} produits créés/mis à jour`);
+
+  // Créer l'utilisateur gérant
+  const managerEmail = process.env.MANAGER_EMAIL || 'manager@avenuecafe.tg';
+  const managerPassword = process.env.MANAGER_PASSWORD || 'manager123';
+  const hashedManagerPassword = await bcrypt.hash(managerPassword, 10);
+
+  await prisma.user.upsert({
+    where: { email: managerEmail },
+    update: {},
+    create: {
+      email: managerEmail,
+      password: hashedManagerPassword,
+      role: 'manager',
+    },
+  });
+
+  console.log(`✅ Utilisateur gérant créé: ${managerEmail}`);
+
+  // Créer l'utilisateur caissier
+  const cashierEmail = process.env.CASHIER_EMAIL || 'cashier@avenuecafe.tg';
+  const cashierPassword = process.env.CASHIER_PASSWORD || 'cashier123';
+  const hashedCashierPassword = await bcrypt.hash(cashierPassword, 10);
+
+  await prisma.user.upsert({
+    where: { email: cashierEmail },
+    update: {},
+    create: {
+      email: cashierEmail,
+      password: hashedCashierPassword,
+      role: 'cashier',
+    },
+  });
+
+  console.log(`✅ Utilisateur caissier créé: ${cashierEmail}`);
 }
 
 main()

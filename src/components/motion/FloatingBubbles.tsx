@@ -1,18 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 export function FloatingBubbles() {
-  const [bubbles, setBubbles] = useState<Array<{id: number; size: number; x: number; y: number; duration: number; delay: number; xEnd: number}>>([]);
-  const [isClient, setIsClient] = useState(false);
-  const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  useEffect(() => {
-    setIsClient(true);
-    if (shouldReduceMotion) return;
-
-    const generatedBubbles = [...Array(8)].map((_, i) => ({
+  const [bubbles] = useState<Array<{id: number; size: number; x: number; y: number; duration: number; delay: number; xEnd: number}>>(() => {
+    if (typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return [];
+    }
+    return [...Array(8)].map((_, i) => ({
       id: i,
       size: 10 + Math.random() * 20,
       x: Math.random() * 100,
@@ -21,10 +17,11 @@ export function FloatingBubbles() {
       delay: Math.random() * 2,
       xEnd: Math.random() * 20 - 10,
     }));
-    setBubbles(generatedBubbles);
-  }, [shouldReduceMotion]);
+  });
 
-  if (!isClient || shouldReduceMotion) {
+  const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (shouldReduceMotion) {
     return null;
   }
 

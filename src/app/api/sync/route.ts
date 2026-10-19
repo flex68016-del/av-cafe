@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
     
     const signature = createHash('sha256')
-      .update(JSON.stringify(items.sort((a, b) => a.productId.localeCompare(b.productId))))
+      .update(JSON.stringify(items.sort((a, b) => (a.productId || '').localeCompare(b.productId || ''))))
       .digest('hex');
     
     const existingOrder = await prisma.order.findFirst({
@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
     const order = await prisma.order.create({
       data: {
         total,
-        status: 'completed',
+        status: 'pending',
+        source: 'offline',
         signature,
         items: {
           create: items.map(item => ({

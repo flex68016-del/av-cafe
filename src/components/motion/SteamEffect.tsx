@@ -1,27 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 export function SteamEffect() {
-  const [particles, setParticles] = useState<Array<{id: number; size: number; left: number; delay: number}>>([]);
-  const [isClient, setIsClient] = useState(false);
-  const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  useEffect(() => {
-    setIsClient(true);
-    if (shouldReduceMotion) return;
-
-    const generatedParticles = [...Array(5)].map((_, i) => ({
+  const [particles] = useState<Array<{id: number; size: number; left: number; delay: number}>>(() => {
+    if (typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return [];
+    }
+    return [...Array(5)].map((_, i) => ({
       id: i,
       size: 20 + Math.random() * 30,
       left: 30 + Math.random() * 40,
       delay: i * 0.5,
     }));
-    setParticles(generatedParticles);
-  }, [shouldReduceMotion]);
+  });
 
-  if (!isClient || shouldReduceMotion) {
+  const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (shouldReduceMotion) {
     return null;
   }
 

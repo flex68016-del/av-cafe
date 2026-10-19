@@ -15,10 +15,33 @@ export default function CommandePage() {
   const router = useRouter();
 
   async function handleSubmit() {
-    const newOrderNumber = `#${Date.now().toString().slice(-6)}`;
-    setOrderNumber(newOrderNumber);
-    setShowConfirmation(true);
-    clearCart();
+    try {
+      const orderResponse = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+          total,
+          customerName: (document.querySelector('input[type="text"]') as HTMLInputElement)?.value || '',
+          customerPhone: (document.querySelector('input[type="tel"]') as HTMLInputElement)?.value || '',
+        }),
+      });
+
+      if (orderResponse.ok) {
+        const order = await orderResponse.json();
+        const newOrderNumber = `#${order.id.slice(-6)}`;
+        setOrderNumber(newOrderNumber);
+        setShowConfirmation(true);
+        clearCart();
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+    }
   }
 
   function handleClose() {

@@ -15,8 +15,15 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Avenue Café",
-  description: "Commande en ligne et caisse hors ligne pour Avenue Café",
+  title: "Avenue Café - Bubble Tea, Brunch & Plats Gourmands | Avenou, Lomé",
+  description: "Découvrez Avenue Café à Avenou, Lomé : Bubble Tea authentique, brunch, plats gourmands et cocktails. Commandez en ligne ou venez déguster sur place.",
+  keywords: "bubble tea, brunch, cocktails, Lomé, Togo, café, avenue café",
+  openGraph: {
+    title: "Avenue Café - Bubble Tea, Brunch & Plats Gourmands",
+    description: "Découvrez Avenue Café à Avenou, Lomé : Bubble Tea authentique, brunch, plats gourmands et cocktails.",
+    type: "website",
+    locale: "fr_FR",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -25,6 +32,45 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="fr"
       className={`${barlowCondensed.variable} ${dmSans.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Restaurant",
+              "name": "Avenue Café",
+              "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "Avenou",
+                "addressLocality": "Lomé",
+                "addressCountry": "TG"
+              },
+              "telephone": "+228 72 22 92 06",
+              "openingHoursSpecification": [
+                {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": ["Tuesday", "Wednesday", "Thursday"],
+                  "opens": "10:00",
+                  "closes": "22:00"
+                },
+                {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": ["Friday", "Saturday"],
+                  "opens": "10:00",
+                  "closes": "23:00"
+                },
+                {
+                  "@type": "OpeningHoursSpecification",
+                  "dayOfWeek": "Sunday",
+                  "opens": "10:00",
+                  "closes": "21:00"
+                }
+              ]
+            })
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

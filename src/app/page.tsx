@@ -3,7 +3,9 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/Button';
 import { Reveal } from '@/components/motion/Reveal';
 import { SplitTitle } from '@/components/motion/SplitTitle';
-import { BrushWipe } from '@/components/motion/BrushWipe';
+import { BrushTransition } from '@/components/motion/BrushTransition';
+import { ScrollReveal } from '@/components/motion/ScrollReveal';
+import { FloatingBubbles } from '@/components/motion/FloatingBubbles';
 
 export default function HomePage() {
   return (
@@ -29,9 +31,10 @@ export default function HomePage() {
                 </Button>
               </div>
             </div>
-            <div className="flex justify-center">
-              <div className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-gray-800 flex items-center justify-center">
+            <div className="flex justify-center relative">
+              <div className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-gray-800 flex items-center justify-center relative overflow-hidden">
                 <span className="text-gray-600">[PHOTO bubble tea]</span>
+                <FloatingBubbles />
               </div>
             </div>
           </div>
@@ -50,9 +53,9 @@ export default function HomePage() {
       </section>
 
       {/* Concept Section */}
-      <Reveal delay={0.1}>
+      <ScrollReveal delay={0.1}>
         <section className="container mx-auto px-4 py-16">
-          <BrushWipe className="mb-8" />
+          <BrushTransition className="mb-8" />
           <SplitTitle text="LE CONCEPT" className="text-3xl md:text-4xl font-heading font-bold text-center mb-4" />
           <p className="text-xl text-orange-500 text-center mb-12">
             UN SEUL LIEU, TROIS UNIVERS
@@ -75,12 +78,12 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-      </Reveal>
+      </ScrollReveal>
 
       {/* Créations Section */}
-      <Reveal delay={0.2}>
+      <ScrollReveal delay={0.2}>
         <section className="container mx-auto px-4 py-16">
-          <BrushWipe className="mb-8" />
+          <BrushTransition className="mb-8" />
           <SplitTitle text="NOS CRÉATIONS" className="text-3xl md:text-4xl font-heading font-bold text-center mb-12" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
@@ -106,12 +109,12 @@ export default function HomePage() {
             <Button href="/menu">Voir tout le menu</Button>
           </div>
         </section>
-      </Reveal>
+      </ScrollReveal>
 
       {/* Commander Section */}
-      <Reveal delay={0.3}>
+      <ScrollReveal delay={0.3}>
         <section id="commander" className="container mx-auto px-4 py-16">
-          <BrushWipe className="mb-8" />
+          <BrushTransition className="mb-8" />
           <SplitTitle text="SIMPLE ET RAPIDE, DIRECTEMENT EN LIGNE" className="text-3xl md:text-4xl font-heading font-bold text-center mb-4" />
           <div className="grid md:grid-cols-3 gap-8 mt-12">
             {[
@@ -134,12 +137,12 @@ export default function HomePage() {
             <Button>Commander en ligne</Button>
           </div>
         </section>
-      </Reveal>
+      </ScrollReveal>
 
       {/* Ambiance Section */}
-      <Reveal delay={0.4}>
+      <ScrollReveal delay={0.4}>
         <section className="container mx-auto px-4 py-16">
-          <BrushWipe className="mb-8" />
+          <BrushTransition className="mb-8" />
           <SplitTitle text="UN LIEU À VIVRE" className="text-3xl md:text-4xl font-heading font-bold text-center mb-12" />
           <div className="grid md:grid-cols-3 gap-4">
             {[
@@ -155,12 +158,12 @@ export default function HomePage() {
             ))}
           </div>
         </section>
-      </Reveal>
+      </ScrollReveal>
 
       {/* Avis Section */}
-      <Reveal delay={0.5}>
+      <ScrollReveal delay={0.5}>
         <section className="container mx-auto px-4 py-16">
-          <BrushWipe className="mb-8" />
+          <BrushTransition className="mb-8" />
           <SplitTitle text="AVIS DE NOS CLIENTS" className="text-3xl md:text-4xl font-heading font-bold text-center mb-12" />
           <div className="grid md:grid-cols-3 gap-8">
             {[1, 2, 3].map((index) => (
@@ -183,12 +186,12 @@ export default function HomePage() {
             </Reveal>
           </div>
         </section>
-      </Reveal>
+      </ScrollReveal>
 
       {/* Infos Section */}
-      <Reveal delay={0.6}>
+      <ScrollReveal delay={0.6}>
         <section id="infos" className="container mx-auto px-4 py-16">
-          <BrushWipe className="mb-8" />
+          <BrushTransition className="mb-8" />
           <SplitTitle text="NOUS TROUVER" className="text-3xl md:text-4xl font-heading font-bold text-center mb-12" />
           <div className="grid md:grid-cols-2 gap-8">
             <div>
@@ -222,7 +225,7 @@ export default function HomePage() {
             </Reveal>
           </div>
         </section>
-      </Reveal>
+      </ScrollReveal>
 
       <Footer />
     </div>

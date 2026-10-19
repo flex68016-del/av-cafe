@@ -1,12 +1,16 @@
 import Link from 'next/link';
+import { SteamEffect } from './motion/SteamEffect';
 
 export function Header() {
   return (
     <header className="bg-[#0B0B0B] border-b border-gray-800 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-2xl font-heading font-bold text-orange-500">
-            AVENUE CAFÉ
+        <div className="flex items-center justify-between relative">
+          <Link href="/" className="text-2xl font-heading font-bold text-orange-500 relative">
+            <span className="relative inline-block">
+              AVENUE CAFÉ
+              <SteamEffect />
+            </span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">

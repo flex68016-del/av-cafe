@@ -10,7 +10,9 @@
     "postinstall": "prisma skills sync || exit 0"
   },
   "dependencies": {
-    "@prisma/client": "^7.10.1",
+    "@neon/config": "^1.9.2",
+    "@neon/env": "^1.6.3",
+    "@prisma/client": "^5.22.0",
     "dexie": "^4.4.6",
     "next": "16.4.2",
     "react": "19.3.0",
@@ -24,8 +26,9 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
-    "prisma": "^8.0.0-rc.23",
+    "prisma": "^5.22.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

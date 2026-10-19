@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Avenue Café
 
-## Getting Started
+Site de commande en ligne et caisse hors ligne pour Avenue Café (Avenou, Lomé, Togo).
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js** (App Router, TypeScript, dossier src)
+- **PostgreSQL** avec Prisma ORM
+- **Dexie** pour le stockage local (IndexedDB)
+- **Zod** pour la validation des données
+- **Tailwind CSS** pour le styling
+
+## Configuration
+
+1. Copier `env.example` en `.env` et configurer `DATABASE_URL`
+2. Installer les dépendances : `npm install`
+3. Appliquer les migrations Prisma : `npx prisma migrate dev`
+4. Lancer le serveur de développement : `npm run dev`
+
+## API
+
+### POST /api/sync
+
+Synchronise une commande hors ligne avec le serveur.
+
+**Corps de la requête :**
+```json
+{
+  "items": [
+    {
+      "productId": "abc123",
+      "name": "Café",
+      "price": 500,
+      "quantity": 2
+    }
+  ],
+  "total": 1000
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Réponses :**
+- `201` : Commande synchronisée avec succès
+- `400` : Données invalides ou total incorrect
+- `409` : Commande déjà synchronisée (doublon détecté)
+- `500` : Erreur serveur
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Développement
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev      # Serveur de développement
+npm run build    # Build de production
+npm run start    # Serveur de production
+npm run lint     # ESLint
+```
 
-## Learn More
+## Base de données
 
-To learn more about Next.js, take a look at the following resources:
+- **Product** : Catalogue des produits
+- **Order** : Commandes en ligne
+- **OrderItem** : Articles des commandes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stockage local (Dexie)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **cart** : Panier d'achat
+- **offlineOrders** : Commandes hors ligne en attente de synchronisation

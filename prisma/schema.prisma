@@ -16,14 +16,13 @@ model Product {
   available   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  orderItems  OrderItem[]
 }
 
 model Order {
   id          String      @id @default(cuid())
   total       Int
   status      String      @default("pending")
+  signature   String?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -39,8 +38,6 @@ model OrderItem {
   name       String
 
   order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product    Product @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([orderId])
-  @@index([productId])
 }

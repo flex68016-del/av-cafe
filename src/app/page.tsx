@@ -134,7 +134,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="text-center mt-12">
-            <Button>Commander en ligne</Button>
+            <Button href="/commande">Commander en ligne</Button>
           </div>
         </section>
       </ScrollReveal>

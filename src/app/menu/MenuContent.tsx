@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Reveal } from '@/components/motion/Reveal';
+import { useCart } from '@/contexts/CartContext';
 
 interface Product {
   id: string;
@@ -15,6 +16,7 @@ export function MenuContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tout');
   const [loading, setLoading] = useState(true);
+  const { addToCart } = useCart();
 
   const categories = ['Tout', 'Boissons', 'Salé', 'Sucré'];
 
@@ -37,6 +39,10 @@ export function MenuContent() {
   const filteredProducts = selectedCategory === 'Tout'
     ? products
     : products.filter(p => p.category === selectedCategory);
+
+  function handleAddToCart(product: Product) {
+    addToCart(product);
+  }
 
   return (
     <main className="container mx-auto px-4 py-12">
@@ -82,7 +88,7 @@ export function MenuContent() {
             {filteredProducts.map((product, index) => (
               <Reveal key={product.id} delay={index * 0.05}>
                 <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="aspect-square bg-gray-800 flex items-center justify-center">
+                  <div className="aspect-square bg-gray-800 flex items-center justify-center relative">
                     <span className="text-gray-600">[PHOTO]</span>
                   </div>
                   <div className="p-4">
@@ -90,7 +96,15 @@ export function MenuContent() {
                     {product.description && (
                       <p className="text-gray-400 text-sm mb-2">{product.description}</p>
                     )}
-                    <p className="text-orange-500 font-bold">{product.price} F</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-orange-500 font-bold">{product.price} F</p>
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors min-h-[44px]"
+                      >
+                        Ajouter
+                      </button>
+                    </div>
                   </div>
                 </div>
               </Reveal>

@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, ReactNode } from 'react';
 import Lenis from 'lenis';
 
-export function SmoothScroll() {
+interface SmoothScrollProps {
+  children: ReactNode;
+}
+
+export function SmoothScroll({ children }: SmoothScrollProps) {
   useEffect(() => {
     const shouldReduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -34,5 +38,5 @@ export function SmoothScroll() {
     };
   }, []);
 
-  return null;
+  return <>{children}</>;
 }

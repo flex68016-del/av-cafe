@@ -4,14 +4,14 @@ import { useRef, useEffect, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 
 interface CounterProps {
-  from: number;
-  to: number;
+  value: number;
+  suffix?: string;
   duration?: number;
   className?: string;
 }
 
-export function Counter({ from, to, duration = 2, className = '' }: CounterProps) {
-  const [count, setCount] = useState(from);
+export function Counter({ value, suffix = '', duration = 0.5, className = '' }: CounterProps) {
+  const [count, setCount] = useState(0);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
   const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -20,7 +20,7 @@ export function Counter({ from, to, duration = 2, className = '' }: CounterProps
   useEffect(() => {
     if (!isInView || shouldReduceMotion || hasAnimated.current) {
       if (shouldReduceMotion && !hasAnimated.current) {
-        setCount(to);
+        setCount(value);
         hasAnimated.current = true;
       }
       return;
@@ -34,7 +34,7 @@ export function Counter({ from, to, duration = 2, className = '' }: CounterProps
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / (duration * 1000), 1);
       
-      setCount(Math.floor(progress * (to - from) + from));
+      setCount(Math.floor(progress * value));
 
       if (progress < 1) {
         animationFrame = requestAnimationFrame(animate);
@@ -48,7 +48,7 @@ export function Counter({ from, to, duration = 2, className = '' }: CounterProps
         cancelAnimationFrame(animationFrame);
       }
     };
-  }, [isInView, from, to, duration, shouldReduceMotion]);
+  }, [isInView, value, duration, shouldReduceMotion]);
 
   return (
     <motion.span
@@ -58,7 +58,7 @@ export function Counter({ from, to, duration = 2, className = '' }: CounterProps
       viewport={{ once: true }}
       className={className}
     >
-      {count}
+      {count}{suffix}
     </motion.span>
   );
 }

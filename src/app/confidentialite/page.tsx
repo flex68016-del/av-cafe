@@ -51,10 +51,10 @@ export default function ConfidentialitePage() {
               Conformément à la loi togolaise sur la protection des données personnelles, vous disposez des droits suivants :
             </p>
             <ul className="list-disc list-inside text-gray-300 ml-4">
-              <li>Droit d'accès à vos données</li>
+              <li>Droit d&apos;accès à vos données</li>
               <li>Droit de rectification</li>
-              <li>Droit à l'effacement</li>
-              <li>Droit d'opposition</li>
+              <li>Droit à l&apos;effacement</li>
+              <li>Droit d&apos;opposition</li>
             </ul>
             <p className="text-gray-300 mt-4">
               Pour exercer ces droits, contactez-nous à : contact@avenuecafe.tg

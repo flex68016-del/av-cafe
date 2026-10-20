@@ -1,6 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Header } from '@/components/Header';
-import Footer from '@/components/Footer';
 
 export default function MentionsLegalesPage() {
   return (
@@ -57,8 +56,6 @@ export default function MentionsLegalesPage() {
           </section>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

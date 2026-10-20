@@ -1,6 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
 import { Header } from '@/components/Header';
-import Footer from '@/components/Footer';
 
 export default function CGVPage() {
   return (
@@ -96,8 +95,6 @@ export default function CGVPage() {
           </section>
         </div>
       </main>
-
-      <Footer />
     </div>
   );
 }

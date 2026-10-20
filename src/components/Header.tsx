@@ -7,10 +7,12 @@ import { useState } from 'react';
 import { Cart } from './Cart';
 import Logo from './Logo';
 import LogoSteam from './LogoSteam';
+import { PWAInstallButton } from './PWAInstallButton';
 
 export function Header() {
   const { items } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -40,6 +42,8 @@ export function Header() {
             </nav>
 
             <div className="flex items-center gap-4">
+              <PWAInstallButton />
+
               <button
                 onClick={() => setIsCartOpen(true)}
                 className="relative p-2 hover:bg-gray-800 rounded-lg transition-colors min-h-[44px] min-w-[44px]"
@@ -50,7 +54,10 @@ export function Header() {
                 <BounceBadge count={items.length} />
               </button>
 
-              <button className="md:hidden text-white">
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden text-white p-2"
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
@@ -59,6 +66,26 @@ export function Header() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-gray-900 border-b border-gray-800">
+          <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
+            <Link href="/" className="text-white hover:text-orange-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              Accueil
+            </Link>
+            <Link href="/menu" className="text-white hover:text-orange-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              Menu
+            </Link>
+            <Link href="/cocktails" className="text-white hover:text-orange-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              Cocktails
+            </Link>
+            <Link href="/#infos" className="text-white hover:text-orange-500 transition-colors" onClick={() => setIsMobileMenuOpen(false)}>
+              Infos
+            </Link>
+          </nav>
+        </div>
+      )}
 
       <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>

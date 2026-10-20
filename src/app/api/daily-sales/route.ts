@@ -10,17 +10,31 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
-    
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
+    const period = searchParams.get('period') || 'day';
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (period === 'month') {
+      const [year, month] = date.split('-').map(Number);
+      startDate = new Date(year, month - 1, 1);
+      endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    } else if (period === 'year') {
+      const year = parseInt(date);
+      startDate = new Date(year, 0, 1);
+      endDate = new Date(year, 11, 31, 23, 59, 59, 999);
+    } else {
+      startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+    }
 
     const orders = await prisma.order.findMany({
       where: {
         createdAt: {
-          gte: startOfDay,
-          lte: endOfDay,
+          gte: startDate,
+          lte: endDate,
         },
       },
       include: {
@@ -34,17 +48,18 @@ export async function GET(request: NextRequest) {
     const total = orders.reduce((sum, order) => sum + order.total, 0);
     const completed = orders.filter((o) => o.status === 'completed').reduce((sum, o) => sum + o.total, 0);
     const inProgress = orders.filter((o) => o.status !== 'completed').reduce((sum, o) => sum + o.total, 0);
-    
+
     const avgOrderValue = orders.length > 0 ? total / orders.length : 0;
-    
+
     const onlineOrders = orders.filter((o) => o.source === 'online');
     const boutiqueOrders = orders.filter((o) => o.source === 'offline' || o.source === 'boutique');
-    
+
     const onlineTotal = onlineOrders.reduce((sum, o) => sum + o.total, 0);
     const boutiqueTotal = boutiqueOrders.reduce((sum, o) => sum + o.total, 0);
 
     return NextResponse.json({
       date,
+      period,
       total,
       completed,
       inProgress,

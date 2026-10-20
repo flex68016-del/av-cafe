@@ -37,6 +37,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const [previousOrderIds, setPreviousOrderIds] = useState<Set<string>>(new Set());
+  const [notification, setNotification] = useState<{ show: boolean; count: number }>({ show: false, count: 0 });
   const router = useRouter();
   const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -95,16 +96,18 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (orders.length === 0) return;
-    
+
     const currentIds = new Set(orders.map(order => order.id));
     const newIds = orders.filter(order => !previousOrderIds.has(order.id)).map(order => order.id);
-    
+
     if (newIds.length > 0 && previousOrderIds.size > 0) {
       setNewOrderIds(new Set(newIds));
       playNotificationSound();
+      setNotification({ show: true, count: newIds.length });
       setTimeout(() => setNewOrderIds(new Set()), 3000);
+      setTimeout(() => setNotification({ show: false, count: 0 }), 5000);
     }
-    
+
     setPreviousOrderIds(currentIds);
   }, [orders, previousOrderIds, playNotificationSound]);
 
@@ -161,6 +164,21 @@ export default function OrdersPage() {
 
   return (
     <>
+      {notification.show && (
+        <motion.div
+          initial={shouldReduceMotion ? {} : { opacity: 0, y: -50 }}
+          animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
+          exit={shouldReduceMotion ? {} : { opacity: 0, y: -50 }}
+          className="fixed top-4 right-4 bg-orange-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3"
+        >
+          <div className="text-2xl">🔔</div>
+          <div>
+            <p className="font-bold">Nouvelle{notification.count > 1 ? 's' : ''} commande{notification.count > 1 ? 's' : ''}</p>
+            <p className="text-sm">{notification.count} commande{notification.count > 1 ? 's' : ''} reçue{notification.count > 1 ? 's' : ''}</p>
+          </div>
+        </motion.div>
+      )}
+
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-heading font-bold text-orange-500 mb-4">Commandes</h1>
       </div>

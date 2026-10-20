@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { authenticateRequest, requireAuth, requireManager } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
+    const user = await authenticateRequest(request);
+    const authenticatedUser = requireAuth(user);
+    requireManager(authenticatedUser);
+
     const { searchParams } = new URL(request.url);
     const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
     
@@ -58,6 +63,12 @@ export async function GET(request: NextRequest) {
       orders,
     });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    }
     console.error('Error fetching daily sales:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

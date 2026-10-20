@@ -62,7 +62,15 @@ export default function OrdersPage() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const response = await fetch('/api/orders');
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      const headers: HeadersInit = {};
+      if (user) {
+        headers['Authorization'] = `Bearer ${user.email}`;
+      }
+
+      const response = await fetch('/api/orders', { headers });
       const data = await response.json();
       
       setOrders(data);
@@ -103,9 +111,17 @@ export default function OrdersPage() {
 
   async function updateOrderStatus(orderId: string, newStatus: string) {
     try {
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (user) {
+        headers['Authorization'] = `Bearer ${user.email}`;
+      }
+
       const response = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status: newStatus }),
       });
 

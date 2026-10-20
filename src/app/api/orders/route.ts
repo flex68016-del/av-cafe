@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { orderSchema } from '@/lib/validations';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const user = await authenticateRequest(request);
+    requireAuth(user);
+
     const orders = await prisma.order.findMany({
       include: {
         items: true,
@@ -15,6 +19,9 @@ export async function GET() {
 
     return NextResponse.json(orders);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
     console.error('Error fetching orders:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

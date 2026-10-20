@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { authenticateRequest, requireAuth } from '@/lib/auth';
+import { statusUpdateSchema } from '@/lib/validations';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ['preparing'],
@@ -13,7 +15,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { status } = await request.json();
+    const user = await authenticateRequest(request);
+    requireAuth(user);
+
+    const body = await request.json();
+    const validatedData = statusUpdateSchema.parse(body);
+    const { status } = validatedData;
     const { id: orderId } = await params;
 
     const order = await prisma.order.findUnique({
@@ -36,6 +43,12 @@ export async function PATCH(
 
     return NextResponse.json(updatedOrder);
   } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') {
+      return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
+    }
+    if (error instanceof Error && error.message === 'Unauthorized') {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
     console.error('Error updating order:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcrypt';
+import { loginSchema } from '@/lib/validations';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const validatedData = loginSchema.parse(body);
+    const { email, password } = validatedData;
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -28,6 +31,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof Error && error.name === 'ZodError') {
+      return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
+    }
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

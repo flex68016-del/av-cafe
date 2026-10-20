@@ -38,7 +38,15 @@ export default function DailySalesPage() {
 
   const fetchDailySales = useCallback(async (date: string) => {
     try {
-      const response = await fetch(`/api/daily-sales?date=${date}`);
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      const headers: HeadersInit = {};
+      if (user) {
+        headers['Authorization'] = `Bearer ${user.email}`;
+      }
+
+      const response = await fetch(`/api/daily-sales?date=${date}`, { headers });
       if (response.ok) {
         const salesData = await response.json();
         setData(salesData);
@@ -76,9 +84,17 @@ export default function DailySalesPage() {
   async function closeDay() {
     setClosingDay(true);
     try {
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (user) {
+        headers['Authorization'] = `Bearer ${user.email}`;
+      }
+
       const response = await fetch('/api/close-day', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ date: selectedDate }),
       });
 

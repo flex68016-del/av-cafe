@@ -13,18 +13,29 @@ interface Product {
   available: boolean;
 }
 
+interface FormData {
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+  image: string;
+  imageFile: File | null;
+  available: boolean;
+}
+
 export default function AdminMenuPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
     price: '',
     category: '',
     image: '',
+    imageFile: null,
     available: true,
   });
 
@@ -72,6 +83,25 @@ export default function AdminMenuPage() {
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
     
+    let imageUrl = formData.image;
+
+    // Upload image if file selected
+    if (formData.imageFile) {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', formData.imageFile);
+      
+      const uploadResponse = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: user ? { 'Authorization': `Bearer ${user.email}` } : {},
+        body: formDataUpload,
+      });
+      
+      if (uploadResponse.ok) {
+        const uploadData = await uploadResponse.json();
+        imageUrl = uploadData.url;
+      }
+    }
+    
     const headers: HeadersInit = { 'Content-Type': 'application/json' };
     if (user) {
       headers['Authorization'] = `Bearer ${user.email}`;
@@ -85,6 +115,7 @@ export default function AdminMenuPage() {
       headers,
       body: JSON.stringify({
         ...formData,
+        image: imageUrl,
         price: parseInt(formData.price),
       }),
     });
@@ -92,7 +123,7 @@ export default function AdminMenuPage() {
     if (response.ok) {
       setShowAddModal(false);
       setEditingProduct(null);
-      setFormData({ name: '', description: '', price: '', category: '', image: '', available: true });
+      setFormData({ name: '', description: '', price: '', category: '', image: '', imageFile: null, available: true });
       fetchProducts();
     }
   }
@@ -146,6 +177,7 @@ export default function AdminMenuPage() {
       price: product.price.toString(),
       category: product.category || '',
       image: product.image || '',
+      imageFile: null,
       available: product.available,
     });
     setShowAddModal(true);
@@ -162,7 +194,7 @@ export default function AdminMenuPage() {
         <button
           onClick={() => {
             setEditingProduct(null);
-            setFormData({ name: '', description: '', price: '', category: '', image: '', available: true });
+            setFormData({ name: '', description: '', price: '', category: '', image: '', imageFile: null, available: true });
             setShowAddModal(true);
           }}
           className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg min-h-[44px]"
@@ -274,14 +306,23 @@ export default function AdminMenuPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-400 mb-2">URL de l&apos;image</label>
-                <input
-                  type="text"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
-                  placeholder="https://..."
-                />
+                <label className="block text-sm text-gray-400 mb-2">Image</label>
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+                    className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+                  />
+                  <div className="text-center text-gray-500 text-sm">ou</div>
+                  <input
+                    type="text"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+                    placeholder="https://..."
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -299,7 +340,7 @@ export default function AdminMenuPage() {
                   onClick={() => {
                     setShowAddModal(false);
                     setEditingProduct(null);
-                    setFormData({ name: '', description: '', price: '', category: '', image: '', available: true });
+                    setFormData({ name: '', description: '', price: '', category: '', image: '', imageFile: null, available: true });
                   }}
                   className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg min-h-[44px]"
                 >

@@ -9,7 +9,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function PWAInstallButton({ className }: { className?: string }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstall, setShowInstall] = useState(false);
+  const [showInstall, setShowInstall] = useState(true); // Afficher par défaut
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
   useEffect(() => {
@@ -18,14 +18,13 @@ export function PWAInstallButton({ className }: { className?: string }) {
     console.log('PWA Install: isInstalled from localStorage:', isInstalled);
     if (isInstalled === 'true') {
       console.log('PWA Install: App already installed, hiding button');
-      return;
+      setTimeout(() => setShowInstall(false), 0);
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
       console.log('PWA Install: beforeinstallprompt event fired');
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstall(true);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
@@ -39,16 +38,6 @@ export function PWAInstallButton({ className }: { className?: string }) {
 
     window.addEventListener('appinstalled', installedHandler);
 
-    // Détecter iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
-    console.log('PWA Install: isIOS:', isIOS);
-    if (isIOS) {
-      console.log('PWA Install: Showing button for iOS');
-      setTimeout(() => setShowInstall(true), 0);
-    } else {
-      console.log('PWA Install: Not iOS, waiting for beforeinstallprompt');
-    }
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
       window.removeEventListener('appinstalled', installedHandler);
@@ -57,8 +46,14 @@ export function PWAInstallButton({ className }: { className?: string }) {
 
   async function handleInstall() {
     if (!deferredPrompt) {
-      // iOS - afficher les instructions
-      setShowIOSInstructions(true);
+      // iOS ou pas de prompt disponible - afficher les instructions
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
+      if (isIOS) {
+        setShowIOSInstructions(true);
+      } else {
+        // Android mais pas de prompt - peut-être déjà installé ou non éligible
+        alert('Pour installer cette application : utilisez le menu de votre navigateur et sélectionnez "Installer application" ou "Ajouter à l\'écran d\'accueil"');
+      }
       return;
     }
 
@@ -72,7 +67,14 @@ export function PWAInstallButton({ className }: { className?: string }) {
     setDeferredPrompt(null);
   }
 
-  if (!showInstall) return null;
+  console.log('PWA Install: Rendering, showInstall =', showInstall);
+
+  if (!showInstall) {
+    console.log('PWA Install: Not rendering button because showInstall is false');
+    return null;
+  }
+
+  console.log('PWA Install: Rendering install button');
 
   return (
     <>

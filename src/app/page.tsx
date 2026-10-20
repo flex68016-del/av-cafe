@@ -94,19 +94,20 @@ export default function HomePage() {
           <SplitTitle text="NOS CRÉATIONS" className="text-3xl md:text-4xl font-heading font-bold text-center mb-12" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { name: "L'Avenue Brown Sugar", price: "1700 F" },
-              { name: "Croque Avenue Madame", price: "3000 F" },
-              { name: "Pancake caramel", price: "2500 F" },
-              { name: "Mai-Tai", price: "3500 F" },
-            ].map((item, index) => (
+              { src: "/img/creation-1.png" },
+              { src: "/img/creation-2.png" },
+              { src: "/img/creation-3.png" },
+              { src: "/img/creation-4.png" }
+            ].map((photo, index) => (
               <Reveal key={index} delay={0.3 + index * 0.1}>
                 <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="aspect-square bg-gray-800 flex items-center justify-center">
-                    <span className="text-gray-600 text-sm">[PHOTO]</span>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold mb-1">{item.name}</h3>
-                    <p className="text-orange-500">{item.price}</p>
+                  <div className="aspect-square relative">
+                    <Image
+                      src={photo.src}
+                      alt="Création"
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                 </div>
               </Reveal>

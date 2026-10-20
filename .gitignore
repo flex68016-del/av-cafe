@@ -39,8 +39,8 @@ yarn-error.log*
 # vercel
 .vercel
 
-# uploads
-/public/uploads
+# uploads (dynamic uploads only)
+/public/uploads/*
 
 # typescript
 *.tsbuildinfo

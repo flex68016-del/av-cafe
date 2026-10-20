@@ -5,6 +5,7 @@ import { SplitTitle } from '@/components/motion/SplitTitle';
 import { BrushTransition } from '@/components/motion/BrushTransition';
 import { ScrollReveal } from '@/components/motion/ScrollReveal';
 import { FloatingBubbles } from '@/components/motion/FloatingBubbles';
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
@@ -31,8 +32,15 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex justify-center relative">
-              <div className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-gray-800 flex items-center justify-center relative overflow-hidden">
-                <span className="text-gray-600">[PHOTO bubble tea]</span>
+              <div className="w-64 h-64 md:w-80 md:h-80 rounded-full overflow-hidden relative">
+                <Image
+                  src="/img/hero.png"
+                  alt="Bubble tea"
+                  width={320}
+                  height={320}
+                  className="w-full h-full object-cover"
+                  priority
+                />
                 <FloatingBubbles />
               </div>
             </div>
@@ -145,13 +153,18 @@ export default function HomePage() {
           <SplitTitle text="UN LIEU À VIVRE" className="text-3xl md:text-4xl font-heading font-bold text-center mb-12" />
           <div className="grid md:grid-cols-3 gap-4">
             {[
-              "[PHOTO intérieur, lumière chaude]",
-              "[PHOTO comptoir]",
-              "[PHOTO cocktails]"
+              { src: "/img/lieu-1.jpg", alt: "Intérieur" },
+              { src: "/img/lieu-2.jpg", alt: "Comptoir" },
+              { src: "/img/lieu-3.jpg", alt: "Cocktails" }
             ].map((photo, index) => (
               <Reveal key={index} delay={0.5 + index * 0.1}>
-                <div className="aspect-video bg-gray-800 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-600">{photo}</span>
+                <div className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
+                  <Image
+                    src={photo.src}
+                    alt={photo.alt}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
               </Reveal>
             ))}

@@ -50,12 +50,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
 
               {/* Navigation Links */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-6 z-10">
                 {visibleLinks.map((link) => (
                   <button
                     key={link.href}
                     onClick={() => router.push(link.href)}
-                    className={`text-sm font-medium transition-colors min-h-[44px] flex items-center ${
+                    className={`text-sm font-medium transition-colors min-h-[44px] min-w-[44px] flex items-center px-2 py-2 rounded hover:bg-gray-800 ${
                       pathname === link.href
                         ? 'text-orange-500'
                         : 'text-gray-400 hover:text-white'

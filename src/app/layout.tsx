@@ -4,6 +4,7 @@ import "./globals.css";
 import { SmoothScroll } from '@/components/SmoothScroll';
 import { CartProvider } from '@/contexts/CartContext';
 import Footer from '@/components/Footer';
+import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
 
 const barlowCondensed = Barlow_Condensed({
   variable: "--font-barlow-condensed",
@@ -98,6 +99,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col">
         <CartProvider>
+          <ServiceWorkerRegistration />
           <SmoothScroll>
             {children}
           </SmoothScroll>

@@ -15,12 +15,15 @@ export function PWAInstallButton({ className }: { className?: string }) {
   useEffect(() => {
     // Vérifier si l'app est déjà installée
     const isInstalled = localStorage.getItem('pwa-installed');
+    console.log('PWA Install: isInstalled from localStorage:', isInstalled);
     if (isInstalled === 'true') {
+      console.log('PWA Install: App already installed, hiding button');
       return;
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
+      console.log('PWA Install: beforeinstallprompt event fired');
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setShowInstall(true);
     };
@@ -29,6 +32,7 @@ export function PWAInstallButton({ className }: { className?: string }) {
 
     // Écouter l'événement d'installation
     const installedHandler = () => {
+      console.log('PWA Install: appinstalled event fired');
       localStorage.setItem('pwa-installed', 'true');
       setShowInstall(false);
     };
@@ -37,8 +41,12 @@ export function PWAInstallButton({ className }: { className?: string }) {
 
     // Détecter iOS
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
+    console.log('PWA Install: isIOS:', isIOS);
     if (isIOS) {
+      console.log('PWA Install: Showing button for iOS');
       setTimeout(() => setShowInstall(true), 0);
+    } else {
+      console.log('PWA Install: Not iOS, waiting for beforeinstallprompt');
     }
 
     return () => {

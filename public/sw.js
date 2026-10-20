@@ -2,7 +2,7 @@ const CACHE_NAME = 'av-cafe-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/pos',
-  '/manifest.json',
+  '/manifest.webmanifest',
 ];
 
 // Installation du service worker

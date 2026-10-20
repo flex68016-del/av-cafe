@@ -67,7 +67,7 @@ export default function CGVPage() {
           <section>
             <h2 className="text-2xl font-bold mb-4">Rétractation</h2>
             <p className="text-gray-300">
-              Conformément à la réglementation en vigueur, le client dispose d'un délai de rétractation de 24 heures 
+              Conformément à la réglementation en vigueur, le client dispose d&apos;un délai de rétractation de 24 heures 
               à compter de la commande pour annuler sa commande sans frais.
             </p>
           </section>

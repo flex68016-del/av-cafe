@@ -114,9 +114,12 @@ export default function AdminMenuPage() {
       method,
       headers,
       body: JSON.stringify({
-        ...formData,
-        image: imageUrl,
+        name: formData.name,
+        description: formData.description,
         price: parseInt(formData.price),
+        category: formData.category,
+        image: imageUrl || null,
+        available: formData.available,
       }),
     });
 

@@ -29,9 +29,28 @@ Copiez les variables depuis `.env.production.example` dans les **Environment Var
 
 ## Initialisation des utilisateurs admin
 
-Après le premier déploiement, vous devez créer les utilisateurs admin dans la base de production. Utilisez l'endpoint temporaire `/api/auth/init-admin` :
+### Option 1 : Via Neon Console (recommandé)
 
-### Créer le gérant
+1. Allez sur [Neon Console](https://console.neon.tech)
+2. Sélectionnez votre projet av-cafe
+3. Cliquez sur "SQL Editor" dans le menu de gauche
+4. Générez des hashes bcrypt pour vos mots de passe :
+   - Option A : Utilisez [bcrypt-generator.com](https://bcrypt-generator.com/)
+   - Option B : En local : `node -e "console.log(require('bcrypt').hashSync('votre_password', 10))"`
+5. Copiez le contenu du fichier `CREATE_ADMIN_USERS.sql`
+6. Remplacez `$2b$10$REPLACEZ_PAR_VOTRE_HASH_BCRYPT` par vos hashes
+7. Collez-le dans l'éditeur SQL
+8. Cliquez sur "Run"
+
+Cela créera :
+- Gérant : `manager@avenuecafe.tg` avec votre mot de passe
+- Caissier : `cashier@avenuecafe.tg` avec votre mot de passe
+
+### Option 2 : Via l'endpoint API (alternative)
+
+Si vous préférez utiliser l'endpoint temporaire :
+
+#### Créer le gérant
 
 ```bash
 curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \
@@ -43,7 +62,7 @@ curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \
   }'
 ```
 
-### Créer le caissier
+#### Créer le caissier
 
 ```bash
 curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \

@@ -29,7 +29,7 @@ Copiez les variables depuis `.env.production.example` dans les **Environment Var
 
 ## Initialisation des utilisateurs admin
 
-### Option 1 : Via Neon Console (recommandé)
+Pour créer les utilisateurs admin en production, utilisez Neon Console :
 
 1. Allez sur [Neon Console](https://console.neon.tech)
 2. Sélectionnez votre projet av-cafe
@@ -37,44 +37,40 @@ Copiez les variables depuis `.env.production.example` dans les **Environment Var
 4. Générez des hashes bcrypt pour vos mots de passe :
    - Option A : Utilisez [bcrypt-generator.com](https://bcrypt-generator.com/)
    - Option B : En local : `node -e "console.log(require('bcrypt').hashSync('votre_password', 10))"`
-5. Copiez le contenu du fichier `CREATE_ADMIN_USERS.sql`
-6. Remplacez `$2b$10$REPLACEZ_PAR_VOTRE_HASH_BCRYPT` par vos hashes
-7. Collez-le dans l'éditeur SQL
-8. Cliquez sur "Run"
+5. Exécutez le SQL suivant (remplacez les hashes par les vôtres) :
 
-Cela créera :
-- Gérant : `manager@avenuecafe.tg` avec votre mot de passe
-- Caissier : `cashier@avenuecafe.tg` avec votre mot de passe
+```sql
+-- Insérer le gérant
+INSERT INTO "User" (email, password, role, "createdAt", "updatedAt")
+VALUES (
+  'manager@avenuecafe.tg',
+  '$2b$10$REPLACEZ_PAR_VOTRE_HASH_BCRYPT',
+  'manager',
+  NOW(),
+  NOW()
+)
+ON CONFLICT (email) DO UPDATE SET
+  password = EXCLUDED.password,
+  role = EXCLUDED.role,
+  "updatedAt" = NOW();
 
-### Option 2 : Via l'endpoint API (alternative)
+-- Insérer le caissier
+INSERT INTO "User" (email, password, role, "createdAt", "updatedAt")
+VALUES (
+  'cashier@avenuecafe.tg',
+  '$2b$10$REPLACEZ_PAR_VOTRE_HASH_BCRYPT',
+  'cashier',
+  NOW(),
+  NOW()
+)
+ON CONFLICT (email) DO UPDATE SET
+  password = EXCLUDED.password,
+  role = EXCLUDED.role,
+  "updatedAt" = NOW();
 
-Si vous préférez utiliser l'endpoint temporaire :
-
-#### Créer le gérant
-
-```bash
-curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "manager@avenuecafe.tg",
-    "password": "VOTRE_MOT_DE_PASSE",
-    "role": "manager"
-  }'
+-- Vérifier les utilisateurs créés
+SELECT id, email, role, "createdAt" FROM "User" WHERE role IN ('manager', 'cashier');
 ```
-
-#### Créer le caissier
-
-```bash
-curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "cashier@avenuecafe.tg",
-    "password": "VOTRE_MOT_DE_PASSE",
-    "role": "cashier"
-  }'
-```
-
-**⚠️ IMPORTANT :** Après avoir créé les utilisateurs, supprimez le fichier `src/app/api/auth/init-admin/route.ts` et redéployez.
 
 ## Sécurité
 
@@ -82,4 +78,3 @@ curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \
 - Les mots de passe doivent être différents entre gérant et caissier
 - Changez les mots de passe régulièrement
 - Utilisez des mots de passe générés aléatoirement pour la production
-- Supprimez l'endpoint `init-admin` après initialisation

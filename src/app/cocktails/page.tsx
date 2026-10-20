@@ -3,35 +3,49 @@
 import { Header } from '@/components/Header';
 import { Reveal } from '@/components/motion/Reveal';
 import { useCart } from '@/contexts/CartContext';
+import Image from 'next/image';
 
-const cocktails = [
+interface Cocktail {
+  id: string;
+  name: string;
+  type: string;
+  price: number;
+  ingredients: string;
+  image: string;
+}
+
+const cocktails: Cocktail[] = [
   {
     id: 'cocktail-1',
     name: "MAI-TAI",
     type: "Cocktail",
     price: 3500,
-    ingredients: "Rhum blanc, rhum ambré, Cointreau, sirop de passion"
+    ingredients: "Rhum blanc, rhum ambré, Cointreau, sirop de passion",
+    image: "https://images.unsplash.com/photo-1558200104-7d6c9ef67653?w=800"
   },
   {
     id: 'cocktail-2',
     name: "BLUE HAWAÏEN",
     type: "Cocktail",
     price: 3500,
-    ingredients: "Jus d'ananas, lait de coco, rhum blanc, bleu de curaçao"
+    ingredients: "Jus d'ananas, lait de coco, rhum blanc, bleu de curaçao",
+    image: "https://images.unsplash.com/photo-1558200104-7d6c9ef67653?w=800"
   },
   {
     id: 'cocktail-3',
     name: "BORA-BORA",
     type: "Mocktail",
     price: 3000,
-    ingredients: "Jus d'orange, ananas, citron, passion, grenadine"
+    ingredients: "Jus d'orange, ananas, citron, passion, grenadine",
+    image: "https://images.unsplash.com/photo-1754594537133-796eb54f206c?w=800"
   },
   {
     id: 'cocktail-4',
     name: "TROPICAL",
     type: "Mocktail",
     price: 3000,
-    ingredients: "Jus d'orange, jus de mangue, sirop de menthe"
+    ingredients: "Jus d'orange, jus de mangue, sirop de menthe",
+    image: "https://images.unsplash.com/photo-1752245818743-0fa72ba80c57?w=800"
   }
 ];
 
@@ -61,19 +75,34 @@ export default function CocktailsPage() {
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {cocktails.map((cocktail, index) => (
               <Reveal key={cocktail.id} delay={index * 0.1}>
-                <div className="bg-gray-900 rounded-lg p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h2 className="text-2xl font-heading font-bold">{cocktail.name}</h2>
-                    <span className="text-orange-500 font-bold">{cocktail.price} F</span>
+                <div className="bg-gray-900 rounded-lg overflow-hidden">
+                  <div className="aspect-square bg-gray-800 flex items-center justify-center relative overflow-hidden">
+                    {cocktail.image ? (
+                      <Image
+                        src={cocktail.image}
+                        alt={cocktail.name}
+                        width={400}
+                        height={400}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-600">[PHOTO]</span>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-400 mb-2">{cocktail.type}</p>
-                  <p className="text-gray-300 mb-4">{cocktail.ingredients}</p>
-                  <button
-                    onClick={() => handleAddToCart(cocktail)}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors min-h-[44px]"
-                  >
-                    Ajouter
-                  </button>
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-2">
+                      <h2 className="text-2xl font-heading font-bold">{cocktail.name}</h2>
+                      <span className="text-orange-500 font-bold">{cocktail.price} F</span>
+                    </div>
+                    <p className="text-sm text-gray-400 mb-2">{cocktail.type}</p>
+                    <p className="text-gray-300 mb-4">{cocktail.ingredients}</p>
+                    <button
+                      onClick={() => handleAddToCart(cocktail)}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors min-h-[44px]"
+                    >
+                      Ajouter
+                    </button>
+                  </div>
                 </div>
               </Reveal>
             ))}

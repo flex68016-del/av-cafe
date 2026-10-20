@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -9,6 +10,7 @@ interface Product {
   name: string;
   price: number;
   category: string | null;
+  image: string | null;
   available: boolean;
 }
 
@@ -181,10 +183,17 @@ export default function POSPage() {
                     <button
                       key={product.id}
                       onClick={() => addToCart(product)}
-                      className={`bg-gray-800 p-4 rounded-lg text-left transition-colors ${
+                      className={`bg-gray-800 p-4 rounded-lg text-left transition-colors overflow-hidden ${
                         showFeedback ? 'bg-orange-600' : 'hover:bg-gray-700'
                       }`}
                     >
+                      {product.image && (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-24 object-cover rounded mb-2"
+                        />
+                      )}
                       <p className="font-bold">{product.name}</p>
                       <p className="text-orange-500 font-bold">{product.price} F</p>
                     </button>

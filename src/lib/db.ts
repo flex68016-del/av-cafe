@@ -24,6 +24,7 @@ export interface CachedProduct {
   description: string | null;
   price: number;
   category: string;
+  image: string | null;
   available: boolean;
   cachedAt: Date;
 }
@@ -35,7 +36,7 @@ class AvenueCafeDB extends Dexie {
 
   constructor() {
     super('AvenueCafeDB');
-    this.version(2).stores({
+    this.version(3).stores({
       cart: '++id, productId, addedAt',
       offlineOrders: '++id, status, createdAt, syncedAt',
       cachedProducts: 'id, category, cachedAt',

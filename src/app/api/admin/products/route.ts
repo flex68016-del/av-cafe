@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     requireManager(authenticatedUser);
 
     const body = await request.json();
-    const { name, description, price, category, available } = body;
+    const { name, description, price, category, image, available } = body;
 
     const product = await prisma.product.create({
       data: {
@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
         description,
         price: parseInt(price),
         category,
+        image,
         available: available !== undefined ? available : true,
       },
     });

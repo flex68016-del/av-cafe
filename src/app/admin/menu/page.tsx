@@ -9,6 +9,7 @@ interface Product {
   description: string | null;
   price: number;
   category: string | null;
+  image: string | null;
   available: boolean;
 }
 
@@ -23,6 +24,7 @@ export default function AdminMenuPage() {
     description: '',
     price: '',
     category: '',
+    image: '',
     available: true,
   });
 
@@ -90,7 +92,7 @@ export default function AdminMenuPage() {
     if (response.ok) {
       setShowAddModal(false);
       setEditingProduct(null);
-      setFormData({ name: '', description: '', price: '', category: '', available: true });
+      setFormData({ name: '', description: '', price: '', category: '', image: '', available: true });
       fetchProducts();
     }
   }
@@ -143,6 +145,7 @@ export default function AdminMenuPage() {
       description: product.description || '',
       price: product.price.toString(),
       category: product.category || '',
+      image: product.image || '',
       available: product.available,
     });
     setShowAddModal(true);
@@ -159,7 +162,7 @@ export default function AdminMenuPage() {
         <button
           onClick={() => {
             setEditingProduct(null);
-            setFormData({ name: '', description: '', price: '', category: '', available: true });
+            setFormData({ name: '', description: '', price: '', category: '', image: '', available: true });
             setShowAddModal(true);
           }}
           className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg min-h-[44px]"
@@ -270,6 +273,16 @@ export default function AdminMenuPage() {
                   className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
                 />
               </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">URL de l&apos;image</label>
+                <input
+                  type="text"
+                  value={formData.image}
+                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                  className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+                  placeholder="https://..."
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -286,7 +299,7 @@ export default function AdminMenuPage() {
                   onClick={() => {
                     setShowAddModal(false);
                     setEditingProduct(null);
-                    setFormData({ name: '', description: '', price: '', category: '', available: true });
+                    setFormData({ name: '', description: '', price: '', category: '', image: '', available: true });
                   }}
                   className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg min-h-[44px]"
                 >

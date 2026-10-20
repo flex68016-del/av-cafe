@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Reveal } from '@/components/motion/Reveal';
 import { useCart } from '@/contexts/CartContext';
+import Image from 'next/image';
 
 interface Product {
   id: string;
@@ -10,6 +11,7 @@ interface Product {
   description: string | null;
   price: number;
   category: string | null;
+  image: string | null;
 }
 
 export function MenuContent() {
@@ -88,8 +90,18 @@ export function MenuContent() {
             {filteredProducts.map((product, index) => (
               <Reveal key={product.id} delay={index * 0.05}>
                 <div className="bg-gray-900 rounded-lg overflow-hidden">
-                  <div className="aspect-square bg-gray-800 flex items-center justify-center relative">
-                    <span className="text-gray-600">[PHOTO]</span>
+                  <div className="aspect-square bg-gray-800 flex items-center justify-center relative overflow-hidden">
+                    {product.image ? (
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        width={400}
+                        height={400}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-600">[PHOTO]</span>
+                    )}
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold text-lg mb-1">{product.name}</h3>

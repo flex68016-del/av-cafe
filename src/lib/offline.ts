@@ -52,6 +52,7 @@ export async function cacheProducts(products: Array<{
   description: string | null;
   price: number;
   category: string | null;
+  image: string | null;
   available: boolean;
 }>): Promise<void> {
   await db.cachedProducts.clear();
@@ -61,6 +62,7 @@ export async function cacheProducts(products: Array<{
     description: p.description,
     price: p.price,
     category: p.category || '',
+    image: p.image,
     available: p.available,
     cachedAt: new Date(),
   }));

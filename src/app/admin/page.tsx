@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Logo from '@/components/Logo';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
@@ -41,6 +42,9 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-[#0B0B0B] text-white flex items-center justify-center">
       <div className="w-full max-w-md p-8">
+        <div className="flex justify-center mb-8">
+          <Logo variant="marque" color="blanc" size={100} className="h-12 w-auto" />
+        </div>
         <h1 className="text-3xl font-heading font-bold text-center mb-8 text-orange-500">
           ADMINISTRATION
         </h1>

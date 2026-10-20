@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Logo from '@/components/Logo';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -43,9 +44,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {/* Logo */}
               <button
                 onClick={() => router.push('/admin/orders')}
-                className="text-2xl font-heading font-bold text-orange-500"
+                className="h-12"
               >
-                Admin
+                <Logo variant="marque" color="orange" size={100} className="h-8 w-auto" />
               </button>
 
               {/* Navigation Links */}

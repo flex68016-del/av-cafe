@@ -18,24 +18,33 @@ const dmSans = DM_Sans({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#F57C1F",
+  themeColor: "#0B0B0B",
 };
 
 export const metadata: Metadata = {
-  title: "Avenue Café - Bubble Tea, Brunch & Plats Gourmands | Avenou, Lomé",
+  metadataBase: new URL('https://av-cafe-sage.vercel.app'),
+  title: "Avenue Café – Bubble tea, brunch et plats gourmands à Lomé",
   description: "Découvrez Avenue Café à Avenou, Lomé : Bubble Tea authentique, brunch, plats gourmands et cocktails. Commandez en ligne ou venez déguster sur place.",
   keywords: "bubble tea, brunch, cocktails, Lomé, Togo, café, avenue café",
   openGraph: {
-    title: "Avenue Café - Bubble Tea, Brunch & Plats Gourmands",
+    title: "Avenue Café – Bubble tea, brunch et plats gourmands à Lomé",
     description: "Découvrez Avenue Café à Avenou, Lomé : Bubble Tea authentique, brunch, plats gourmands et cocktails.",
     type: "website",
     locale: "fr_FR",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Avenue Café – Bubble tea, brunch et plats gourmands à Lomé",
+      },
+    ],
   },
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "AvCafé",
+    title: "Avenue Café",
   },
 };
 
@@ -46,7 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${barlowCondensed.variable} ${dmSans.variable} h-full antialiased`}
     >
       <head>
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <script

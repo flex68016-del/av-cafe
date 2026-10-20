@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Logo from './Logo';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,9 +10,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
-            <h3 className="text-2xl font-heading font-bold text-orange-500 mb-4">
-              Avenue Café
-            </h3>
+            <Logo variant="complet" color="blanc" size={120} className="h-16 w-auto mb-4" />
             <p className="text-gray-400 text-sm">
               Votre café de rue à Lomé, Togo. Qualité, ambiance et saveurs authentiques.
             </p>

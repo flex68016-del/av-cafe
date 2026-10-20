@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { SteamEffect } from './motion/SteamEffect';
 import { BounceBadge } from './motion/BounceBadge';
 import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 import { Cart } from './Cart';
+import Logo from './Logo';
 
 export function Header() {
   const { items } = useCart();
@@ -16,11 +16,8 @@ export function Header() {
       <header className="bg-[#0B0B0B] border-b border-gray-800 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between relative">
-            <Link href="/" className="text-2xl font-heading font-bold text-orange-500 relative">
-              <span className="relative inline-block">
-                AVENUE CAFÉ
-                <SteamEffect />
-              </span>
+            <Link href="/" className="relative">
+              <Logo variant="complet" color="blanc" size={150} className="h-12 w-auto" />
             </Link>
             
             <nav className="hidden md:flex items-center gap-6">

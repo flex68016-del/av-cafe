@@ -7,12 +7,18 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-export function PWAInstallButton() {
+export function PWAInstallButton({ className }: { className?: string }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
   useEffect(() => {
+    // Vérifier si l'app est déjà installée
+    const isInstalled = localStorage.getItem('pwa-installed');
+    if (isInstalled === 'true') {
+      return;
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -20,6 +26,14 @@ export function PWAInstallButton() {
     };
 
     window.addEventListener('beforeinstallprompt', handler);
+
+    // Écouter l'événement d'installation
+    const installedHandler = () => {
+      localStorage.setItem('pwa-installed', 'true');
+      setShowInstall(false);
+    };
+
+    window.addEventListener('appinstalled', installedHandler);
 
     // Détecter iOS
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
@@ -29,6 +43,7 @@ export function PWAInstallButton() {
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
     };
   }, []);
 
@@ -55,12 +70,12 @@ export function PWAInstallButton() {
     <>
       <button
         onClick={handleInstall}
-        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-bold min-h-[44px] flex items-center gap-2"
+        className={`bg-orange-500 hover:bg-orange-600 text-white px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold min-h-[44px] flex items-center gap-1 sm:gap-2 ${className || ''}`}
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
-        Installer
+        <span className="hidden sm:inline">Installer</span>
       </button>
 
       {showIOSInstructions && (
@@ -73,12 +88,24 @@ export function PWAInstallButton() {
               <li>Faites défiler vers le bas et appuyez sur <strong>&quot;Ajouter à l&apos;écran d&apos;accueil&quot;</strong></li>
               <li>Appuyez sur <strong>&quot;Ajouter&quot;</strong> en haut à droite</li>
             </ol>
-            <button
-              onClick={() => setShowIOSInstructions(false)}
-              className="w-full mt-6 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg min-h-[44px]"
-            >
-              Fermer
-            </button>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  localStorage.setItem('pwa-installed', 'true');
+                  setShowIOSInstructions(false);
+                  setShowInstall(false);
+                }}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 py-2 rounded-lg min-h-[44px]"
+              >
+                C&apos;est fait
+              </button>
+              <button
+                onClick={() => setShowIOSInstructions(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg min-h-[44px]"
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}

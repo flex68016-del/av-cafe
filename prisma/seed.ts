@@ -52,8 +52,14 @@ async function main() {
   console.log(`✅ ${products.length} produits créés/mis à jour`);
 
   // Créer l'utilisateur gérant
-  const managerEmail = process.env.MANAGER_EMAIL || 'manager@avenuecafe.tg';
-  const managerPassword = process.env.MANAGER_PASSWORD || 'manager123';
+  const managerEmail = process.env.MANAGER_EMAIL;
+  const managerPassword = process.env.MANAGER_PASSWORD;
+
+  if (!managerEmail || !managerPassword) {
+    console.error('❌ MANAGER_EMAIL et MANAGER_PASSWORD doivent être définis dans .env');
+    throw new Error('Variables d\'environnement manquantes');
+  }
+
   const hashedManagerPassword = await bcrypt.hash(managerPassword, 10);
 
   await prisma.user.upsert({
@@ -69,8 +75,14 @@ async function main() {
   console.log(`✅ Utilisateur gérant créé: ${managerEmail}`);
 
   // Créer l'utilisateur caissier
-  const cashierEmail = process.env.CASHIER_EMAIL || 'cashier@avenuecafe.tg';
-  const cashierPassword = process.env.CASHIER_PASSWORD || 'cashier123';
+  const cashierEmail = process.env.CASHIER_EMAIL;
+  const cashierPassword = process.env.CASHIER_PASSWORD;
+
+  if (!cashierEmail || !cashierPassword) {
+    console.error('❌ CASHIER_EMAIL et CASHIER_PASSWORD doivent être définis dans .env');
+    throw new Error('Variables d\'environnement manquantes');
+  }
+
   const hashedCashierPassword = await bcrypt.hash(cashierPassword, 10);
 
   await prisma.user.upsert({

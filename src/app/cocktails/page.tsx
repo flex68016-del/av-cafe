@@ -1,7 +1,6 @@
 'use client';
 
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { Reveal } from '@/components/motion/Reveal';
 import { useCart } from '@/contexts/CartContext';
 
@@ -81,8 +80,6 @@ export default function CocktailsPage() {
           </div>
         </Reveal>
       </main>
-
-      <Footer />
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { Button } from '@/components/Button';
 import { Reveal } from '@/components/motion/Reveal';
 import { SplitTitle } from '@/components/motion/SplitTitle';
@@ -226,8 +225,6 @@ export default function HomePage() {
           </div>
         </section>
       </ScrollReveal>
-
-      <Footer />
     </div>
   );
 }

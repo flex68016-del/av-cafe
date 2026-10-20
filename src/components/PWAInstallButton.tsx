@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -8,30 +8,26 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstallButton({ className }: { className?: string }) {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const deferredPromptRef = useRef<BeforeInstallPromptEvent | null>(null);
   const [showInstall, setShowInstall] = useState(true); // Afficher par défaut
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
   useEffect(() => {
     // Vérifier si l'app est déjà installée
     const isInstalled = localStorage.getItem('pwa-installed');
-    console.log('PWA Install: isInstalled from localStorage:', isInstalled);
     if (isInstalled === 'true') {
-      console.log('PWA Install: App already installed, hiding button');
       setTimeout(() => setShowInstall(false), 0);
     }
 
     const handler = (e: Event) => {
       e.preventDefault();
-      console.log('PWA Install: beforeinstallprompt event fired');
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      deferredPromptRef.current = e as BeforeInstallPromptEvent;
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
     // Écouter l'événement d'installation
     const installedHandler = () => {
-      console.log('PWA Install: appinstalled event fired');
       localStorage.setItem('pwa-installed', 'true');
       setShowInstall(false);
     };
@@ -45,6 +41,7 @@ export function PWAInstallButton({ className }: { className?: string }) {
   }, []);
 
   async function handleInstall() {
+    const deferredPrompt = deferredPromptRef.current;
     if (!deferredPrompt) {
       // iOS ou pas de prompt disponible - afficher les instructions
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as unknown as { MSStream?: boolean }).MSStream;
@@ -64,17 +61,10 @@ export function PWAInstallButton({ className }: { className?: string }) {
       setShowInstall(false);
     }
 
-    setDeferredPrompt(null);
+    deferredPromptRef.current = null;
   }
 
-  console.log('PWA Install: Rendering, showInstall =', showInstall);
-
-  if (!showInstall) {
-    console.log('PWA Install: Not rendering button because showInstall is false');
-    return null;
-  }
-
-  console.log('PWA Install: Rendering install button');
+  if (!showInstall) return null;
 
   return (
     <>

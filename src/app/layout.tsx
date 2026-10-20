@@ -5,6 +5,7 @@ import { SmoothScroll } from '@/components/SmoothScroll';
 import { CartProvider } from '@/contexts/CartContext';
 import Footer from '@/components/Footer';
 import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistration';
+import { StructuredData } from '@/components/StructuredData';
 
 const barlowCondensed = Barlow_Condensed({
   variable: "--font-barlow-condensed",
@@ -59,44 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <script
-          id="structured-data"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Restaurant",
-              "name": "Avenue Café",
-              "address": {
-                "@type": "PostalAddress",
-                "streetAddress": "Avenou",
-                "addressLocality": "Lomé",
-                "addressCountry": "TG"
-              },
-              "telephone": "+228 72 22 92 06",
-              "openingHoursSpecification": [
-                {
-                  "@type": "OpeningHoursSpecification",
-                  "dayOfWeek": ["Tuesday", "Wednesday", "Thursday"],
-                  "opens": "10:00",
-                  "closes": "22:00"
-                },
-                {
-                  "@type": "OpeningHoursSpecification",
-                  "dayOfWeek": ["Friday", "Saturday"],
-                  "opens": "10:00",
-                  "closes": "23:00"
-                },
-                {
-                  "@type": "OpeningHoursSpecification",
-                  "dayOfWeek": "Sunday",
-                  "opens": "10:00",
-                  "closes": "21:00"
-                }
-              ]
-            })
-          }}
-        />
+        <StructuredData />
       </head>
       <body className="min-h-full flex flex-col">
         <CartProvider>

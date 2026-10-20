@@ -27,19 +27,35 @@ Copiez les variables depuis `.env.production.example` dans les **Environment Var
 - Mot de passe du compte caissier
 - **IMPORTANT** : Utilisez un mot de passe fort et unique (au moins 12 caractères, mélange majuscules/minuscules/chiffres/symboles)
 
-## Commande de seed
+## Initialisation des utilisateurs admin
 
-Après le premier déploiement, vous devrez peut-être exécuter le seed pour créer les utilisateurs admin :
+Après le premier déploiement, vous devez créer les utilisateurs admin dans la base de production. Utilisez l'endpoint temporaire `/api/auth/init-admin` :
+
+### Créer le gérant
 
 ```bash
-npx tsx prisma/seed.ts
+curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "manager@avenuecafe.tg",
+    "password": "VOTRE_MOT_DE_PASSE",
+    "role": "manager"
+  }'
 ```
 
-Ou via Vercel CLI :
+### Créer le caissier
+
 ```bash
-vercel env pull .env.local
-npx tsx prisma/seed.ts
+curl -X POST https://av-cafe-sage.vercel.app/api/auth/init-admin \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "cashier@avenuecafe.tg",
+    "password": "VOTRE_MOT_DE_PASSE",
+    "role": "cashier"
+  }'
 ```
+
+**⚠️ IMPORTANT :** Après avoir créé les utilisateurs, supprimez le fichier `src/app/api/auth/init-admin/route.ts` et redéployez.
 
 ## Sécurité
 
@@ -47,3 +63,4 @@ npx tsx prisma/seed.ts
 - Les mots de passe doivent être différents entre gérant et caissier
 - Changez les mots de passe régulièrement
 - Utilisez des mots de passe générés aléatoirement pour la production
+- Supprimez l'endpoint `init-admin` après initialisation

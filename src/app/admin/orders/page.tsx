@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -17,10 +18,11 @@ interface Order {
 }
 
 const STATUS_TRANSITIONS: Record<string, string[]> = {
-  pending: ['preparing'],
+  pending: ['preparing', 'cancelled'],
   preparing: ['ready'],
   ready: ['completed'],
   completed: [],
+  cancelled: [],
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -28,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   preparing: 'En préparation',
   ready: 'Prêtes',
   completed: 'Terminées',
+  cancelled: 'Annulées',
 };
 
 export default function OrdersPage() {
@@ -130,6 +133,29 @@ export default function OrdersPage() {
     }
   }
 
+  async function cancelOrder(orderId: string) {
+    try {
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (user) {
+        headers['Authorization'] = `Bearer ${user.email}`;
+      }
+
+      const response = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers,
+      });
+
+      if (response.ok) {
+        fetchOrders();
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+    }
+  }
+
   function getOrdersByStatus(status: string) {
     return orders.filter(order => order.status === status);
   }
@@ -183,16 +209,26 @@ export default function OrdersPage() {
                       ))}
                     </div>
                     
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center gap-2">
                       <p className="font-bold text-orange-500">{order.total} F</p>
-                      {STATUS_TRANSITIONS[status].length > 0 && (
-                        <button
-                          onClick={() => updateOrderStatus(order.id, STATUS_TRANSITIONS[status][0])}
-                          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm min-h-[36px]"
-                        >
-                          {STATUS_LABELS[STATUS_TRANSITIONS[status][0]]}
-                        </button>
-                      )}
+                      <div className="flex gap-2">
+                        {status === 'pending' && (
+                          <button
+                            onClick={() => cancelOrder(order.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm min-h-[36px]"
+                          >
+                            Annuler
+                          </button>
+                        )}
+                        {STATUS_TRANSITIONS[status].length > 0 && (
+                          <button
+                            onClick={() => updateOrderStatus(order.id, STATUS_TRANSITIONS[status][0])}
+                            className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm min-h-[36px]"
+                          >
+                            {STATUS_LABELS[STATUS_TRANSITIONS[status][0]]}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 ))}

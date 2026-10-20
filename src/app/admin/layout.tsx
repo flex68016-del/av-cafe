@@ -29,6 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navLinks = [
     { href: '/admin/orders', label: 'Commandes', showFor: ['manager', 'cashier'] },
     { href: '/admin/daily-sales', label: 'Ventes du jour', showFor: ['manager'] },
+    { href: '/admin/menu', label: 'Menu', showFor: ['manager'] },
   ];
 
   const visibleLinks = user ? navLinks.filter(link => link.showFor.includes(user.role)) : [];

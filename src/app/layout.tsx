@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { SmoothScroll } from '@/components/SmoothScroll';
@@ -16,6 +16,10 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "700"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#F57C1F",
+};
+
 export const metadata: Metadata = {
   title: "Avenue Café - Bubble Tea, Brunch & Plats Gourmands | Avenou, Lomé",
   description: "Découvrez Avenue Café à Avenou, Lomé : Bubble Tea authentique, brunch, plats gourmands et cocktails. Commandez en ligne ou venez déguster sur place.",
@@ -26,6 +30,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "AvCafé",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -35,6 +45,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${barlowCondensed.variable} ${dmSans.variable} h-full antialiased`}
     >
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

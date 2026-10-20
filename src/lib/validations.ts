@@ -12,6 +12,7 @@ export const orderSchema = z.object({
   total: z.number().int().nonnegative(),
   customerName: z.string().optional(),
   customerPhone: z.string().optional(),
+  cashRegisterId: z.string().optional(),
 });
 
 export type CartItemInput = z.infer<typeof cartItemSchema>;

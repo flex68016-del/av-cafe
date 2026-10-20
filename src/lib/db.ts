@@ -18,15 +18,27 @@ export interface OfflineOrder {
   syncedAt?: Date;
 }
 
+export interface CachedProduct {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  category: string;
+  available: boolean;
+  cachedAt: Date;
+}
+
 class AvenueCafeDB extends Dexie {
   cart!: Table<CartItem>;
   offlineOrders!: Table<OfflineOrder>;
+  cachedProducts!: Table<CachedProduct>;
 
   constructor() {
     super('AvenueCafeDB');
-    this.version(1).stores({
+    this.version(2).stores({
       cart: '++id, productId, addedAt',
       offlineOrders: '++id, status, createdAt, syncedAt',
+      cachedProducts: 'id, category, cachedAt',
     });
   }
 }

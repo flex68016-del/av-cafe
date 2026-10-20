@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     
     const validatedData = orderSchema.parse(body);
     
-    const { items, total } = validatedData;
+    const { items, total, cashRegisterId } = validatedData;
     
     const calculatedTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
@@ -55,8 +55,15 @@ export async function POST(request: NextRequest) {
       },
     });
     
+    // Retourner l'ID de caisse (pour l'instant, on retourne le même pour compatibilité)
+    // TODO: Implémenter la gestion des IDs de caisse côté serveur
     return NextResponse.json(
-      { success: true, orderId: order.id, order },
+      { 
+        success: true, 
+        orderId: order.id, 
+        order,
+        cashRegisterId: cashRegisterId || `CR-${Date.now()}`
+      },
       { status: 201 }
     );
   } catch (error) {

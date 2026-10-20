@@ -35,6 +35,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const [previousOrderIds, setPreviousOrderIds] = useState<Set<string>>(new Set());
+  const [isManager, setIsManager] = useState(false);
   const router = useRouter();
   const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -78,6 +79,8 @@ export default function OrdersPage() {
       return;
     }
 
+    const user = JSON.parse(userStr);
+    setIsManager(user.role === 'manager');
     fetchOrders();
     const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
@@ -127,7 +130,17 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-[#0B0B0B] text-white">
       <header className="bg-gray-900 border-b border-gray-800 p-4">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-heading font-bold text-orange-500">Commandes</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-heading font-bold text-orange-500">Commandes</h1>
+            {isManager && (
+              <a
+                href="/admin/daily-sales"
+                className="text-gray-400 hover:text-white min-h-[44px] flex items-center"
+              >
+                Ventes du jour
+              </a>
+            )}
+          </div>
           <button
             onClick={handleLogout}
             className="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg min-h-[44px]"

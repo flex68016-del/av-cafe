@@ -1,0 +1,17 @@
+{
+  "name": "Avenue Café",
+  "short_name": "AvCafé",
+  "description": "Café tactile Avenue Café",
+  "start_url": "/pos",
+  "display": "standalone",
+  "background_color": "#0B0B0B",
+  "theme_color": "#F57C1F",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

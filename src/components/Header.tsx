@@ -6,6 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 import { Cart } from './Cart';
 import Logo from './Logo';
+import LogoSteam from './LogoSteam';
 
 export function Header() {
   const { items } = useCart();
@@ -17,7 +18,10 @@ export function Header() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between relative">
             <Link href="/" className="relative">
-              <Logo variant="complet" color="blanc" size={150} className="h-12 w-auto" />
+              <div className="relative">
+                <Logo variant="complet" color="blanc" size={150} className="h-12 w-auto" />
+                <LogoSteam className="-top-4 left-1/2 -translate-x-1/2 w-24 h-24" />
+              </div>
             </Link>
             
             <nav className="hidden md:flex items-center gap-6">

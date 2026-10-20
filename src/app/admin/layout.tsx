@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -42,16 +41,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-16">
               {/* Logo */}
-              <Link href="/admin/orders" className="text-2xl font-heading font-bold text-orange-500">
+              <button
+                onClick={() => router.push('/admin/orders')}
+                className="text-2xl font-heading font-bold text-orange-500"
+              >
                 Admin
-              </Link>
+              </button>
 
               {/* Navigation Links */}
               <div className="flex items-center gap-6">
                 {visibleLinks.map((link) => (
-                  <Link
+                  <button
                     key={link.href}
-                    href={link.href}
+                    onClick={() => router.push(link.href)}
                     className={`text-sm font-medium transition-colors min-h-[44px] flex items-center ${
                       pathname === link.href
                         ? 'text-orange-500'
@@ -59,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     }`}
                   >
                     {link.label}
-                  </Link>
+                  </button>
                 ))}
               </div>
 

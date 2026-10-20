@@ -35,7 +35,7 @@ export default function MentionsLegalesPage() {
           <section>
             <h2 className="text-2xl font-bold mb-4">Propriété intellectuelle</h2>
             <p className="text-gray-300">
-              L'ensemble du contenu de ce site (textes, images, vidéos, logos, etc.) est protégé par le droit d'auteur. 
+              L&apos;ensemble du contenu de ce site (textes, images, vidéos, logos, etc.) est protégé par le droit d&apos;auteur. 
               Toute reproduction, même partielle, est interdite sans autorisation préalable.
             </p>
           </section>

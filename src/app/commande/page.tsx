@@ -12,9 +12,17 @@ export default function CommandePage() {
   const { items, total, clearCart } = useCart();
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [error, setError] = useState('');
+  const [fulfillment, setFulfillment] = useState<'DELIVERY' | 'DINE_IN'>('DINE_IN');
   const router = useRouter();
 
-  async function handleSubmit() {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError('');
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
     try {
       const orderResponse = await fetch('/api/orders', {
         method: 'POST',
@@ -27,20 +35,28 @@ export default function CommandePage() {
             quantity: item.quantity,
           })),
           total,
-          customerName: (document.querySelector('input[type="text"]') as HTMLInputElement)?.value || '',
-          customerPhone: (document.querySelector('input[type="tel"]') as HTMLInputElement)?.value || '',
+          customerName: formData.get('customerName'),
+          phone: formData.get('phone'),
+          fulfillment: formData.get('fulfillment'),
+          deliveryAddress: formData.get('deliveryAddress'),
+          deliveryLandmark: formData.get('deliveryLandmark'),
+          customerNote: formData.get('customerNote'),
         }),
       });
 
+      const data = await orderResponse.json();
+
       if (orderResponse.ok) {
-        const order = await orderResponse.json();
-        const newOrderNumber = `#${order.id.slice(-6)}`;
+        const newOrderNumber = `#${data.id.slice(-4)}`;
         setOrderNumber(newOrderNumber);
         setShowConfirmation(true);
         clearCart();
+      } else {
+        setError(data.error || 'Erreur lors de la commande');
       }
     } catch (error) {
       console.error('Error creating order:', error);
+      setError('Erreur de connexion');
     }
   }
 
@@ -84,41 +100,100 @@ export default function CommandePage() {
               </div>
             </div>
 
-            <div className="bg-gray-900 rounded-lg p-6 mb-6">
+            <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6">
               <h2 className="text-xl font-bold mb-4">Informations</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Nom</label>
+                  <label className="block text-sm text-gray-400 mb-2">Nom *</label>
                   <input
                     type="text"
+                    name="customerName"
+                    required
+                    minLength={2}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]"
-                    placeholder="Votre nom"
+                    placeholder="Votre nom (minimum 2 lettres)"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Téléphone</label>
+                  <label className="block text-sm text-gray-400 mb-2">Téléphone *</label>
                   <input
                     type="tel"
+                    name="phone"
+                    required
+                    pattern="^\+228\d{8}$|^\d{8}$|^\d{8}\s\d{8}$"
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]"
-                    placeholder="Votre numéro"
+                    placeholder="+228 XX XX XX XX"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Format: +228XXXXXXXX ou 90 00 00 00</p>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-2">Type de commande</label>
-                  <select className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]">
-                    <option>Retrait sur place</option>
-                    <option>Livraison (bientôt disponible)</option>
+                  <label className="block text-sm text-gray-400 mb-2">Mode de service *</label>
+                  <select
+                    name="fulfillment"
+                    value={fulfillment}
+                    onChange={(e) => setFulfillment(e.target.value as 'DELIVERY' | 'DINE_IN')}
+                    required
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]"
+                  >
+                    <option value="DINE_IN">Sur place</option>
+                    <option value="DELIVERY">Livraison</option>
                   </select>
                 </div>
-              </div>
-            </div>
 
-            <button
-              onClick={handleSubmit}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors min-h-[44px]"
-            >
-              Valider la commande
-            </button>
+                {fulfillment === 'DELIVERY' && (
+                  <>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Adresse de livraison *</label>
+                      <input
+                        type="text"
+                        name="deliveryAddress"
+                        required
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]"
+                        placeholder="Votre adresse"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Repère / Quartier (conseillé)</label>
+                      <input
+                        type="text"
+                        name="deliveryLandmark"
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]"
+                        placeholder="Ex: près du marché Lomé"
+                      />
+                    </div>
+                    <div className="bg-gray-800 rounded-lg p-3">
+                      <p className="text-sm text-gray-400">Frais de livraison : <span className="text-orange-500">à confirmer</span></p>
+                    </div>
+                  </>
+                )}
+
+
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Note (optionnel, max 200 caractères)</label>
+                  <textarea
+                    name="customerNote"
+                    maxLength={200}
+                    rows={2}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]"
+                    placeholder="Instructions spéciales..."
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="mt-4 p-3 bg-red-900/50 border border-red-700 rounded-lg text-red-300">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full mt-6 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg transition-colors min-h-[44px]"
+              >
+                Valider la commande
+              </button>
+            </form>
           </>
         )}
       </div>
@@ -136,7 +211,7 @@ export default function CommandePage() {
             <h2 className="text-2xl font-heading font-bold mb-2">Commande confirmée !</h2>
             <p className="text-orange-500 text-xl font-bold mb-4">{orderNumber}</p>
             <p className="text-gray-400 mb-6">
-              Votre commande est prête. Vous pouvez venir la récupérer.
+              {fulfillment === 'DELIVERY' ? 'Votre commande sera livrée.' : 'Votre commande est prête. Vous pouvez venir la récupérer.'}
             </p>
             <button
               onClick={handleClose}

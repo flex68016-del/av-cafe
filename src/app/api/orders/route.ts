@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { orderSchema } from '@/lib/validations';
 import { authenticateRequest, requireAuth } from '@/lib/auth';
+import { ZodError } from 'zod';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +12,9 @@ export async function GET(request: NextRequest) {
     const orders = await prisma.order.findMany({
       include: {
         items: true,
+        events: {
+          orderBy: { createdAt: 'asc' },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -31,7 +35,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = orderSchema.parse(body);
-    const { items, total, customerName, customerPhone } = validatedData;
+    const {
+      items,
+      total,
+      customerName,
+      phone,
+      fulfillment,
+      deliveryAddress,
+      deliveryLandmark,
+      customerNote,
+      deliveryFee,
+    } = validatedData;
 
     const calculatedTotal = items.reduce((sum: number, item) => sum + (item.price * item.quantity), 0);
 
@@ -47,8 +61,13 @@ export async function POST(request: NextRequest) {
         total,
         status: 'pending',
         source: 'online',
-        customerName,
-        customerPhone,
+        customerName: customerName.trim(),
+        phone,
+        fulfillment,
+        deliveryAddress: deliveryAddress?.trim(),
+        deliveryLandmark: deliveryLandmark?.trim(),
+        customerNote: customerNote?.trim(),
+        deliveryFee,
         items: {
           create: items.map((item) => ({
             productId: item.productId,
@@ -57,17 +76,24 @@ export async function POST(request: NextRequest) {
             quantity: item.quantity,
           })),
         },
+        events: {
+          create: {
+            type: 'CREATED',
+            note: 'Commande reçue (en ligne)',
+          },
+        },
       },
       include: {
         items: true,
+        events: true,
       },
     });
 
     return NextResponse.json(order, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && error.name === 'ZodError') {
+    if (error instanceof ZodError) {
       return NextResponse.json(
-        { error: 'Données invalides' },
+        { error: error.issues?.[0]?.message || 'Données invalides' },
         { status: 400 }
       );
     }

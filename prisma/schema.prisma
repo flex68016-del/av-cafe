@@ -7,6 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum FulfillmentType {
+  DELIVERY
+  DINE_IN
+}
+
+enum OrderEventType {
+  CREATED
+  ACCEPTED
+  READY
+  COMPLETED
+  CANCELLED
+  NOTE
+}
+
 model Product {
   id          String   @id @default(cuid())
   name        String
@@ -20,28 +34,53 @@ model Product {
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  total       Int
-  status      String      @default("pending") // pending, preparing, ready, completed, cancelled
-  source      String      @default("online")
-  signature   String?
-  customerName String?
-  customerPhone String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id               String           @id @default(cuid())
+  total            Int
+  status           String           @default("pending") // pending, preparing, ready, completed, cancelled
+  source           String           @default("online")
+  signature        String?
+  customerName     String?
+  customerPhone    String? // @deprecated: use phone instead
+  phone            String?
+  fulfillment      FulfillmentType  @default(DINE_IN)
+  deliveryAddress  String?
+  deliveryLandmark String?
+  deliveryFee      Int?
+  customerNote     String?
+  cancelReason     String?
+  acceptedAt       DateTime?
+  readyAt          DateTime?
+  doneAt           DateTime?
+  cancelledAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
-  items       OrderItem[]
+  items            OrderItem[]
+  events           OrderEvent[]
 }
 
 model OrderItem {
-  id         String @id @default(cuid())
-  quantity   Int
-  price      Int
-  orderId    String
-  productId  String?
-  name       String
+  id        String @id @default(cuid())
+  quantity  Int
+  price     Int
+  orderId   String
+  productId String?
+  name      String
 
-  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model OrderEvent {
+  id        String        @id @default(cuid())
+  orderId   String
+  type      OrderEventType
+  userId    String?
+  note      String?
+  createdAt DateTime      @default(now())
+
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
 }

@@ -11,9 +11,15 @@ interface Order {
   status: string;
   source: string;
   customerName: string | null;
-  customerPhone: string | null;
+  phone: string | null;
+  fulfillment: string;
+  deliveryAddress: string | null;
+  deliveryLandmark: string | null;
+  deliveryFee: number | null;
+  customerNote: string | null;
   createdAt: string;
   items: Array<{ name: string; quantity: number; price: number }>;
+  events: Array<{ type: string; note: string | null; createdAt: string }>;
 }
 
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -25,11 +31,16 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'Nouvelles',
+  pending: 'Reçues',
   preparing: 'En préparation',
   ready: 'Prêtes',
   completed: 'Terminées',
   cancelled: 'Annulées',
+};
+
+const FULFILLMENT_LABELS: Record<string, string> = {
+  DELIVERY: 'Livraison',
+  DINE_IN: 'Sur place',
 };
 
 export default function OrdersPage() {
@@ -47,14 +58,14 @@ export default function OrdersPage() {
       const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       oscillator.frequency.value = 800;
       oscillator.type = 'sine';
       gainNode.gain.value = 0.1;
-      
+
       oscillator.start();
       oscillator.stop(audioContext.currentTime + 0.2);
     } catch {
@@ -66,7 +77,7 @@ export default function OrdersPage() {
     try {
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
-      
+
       const headers: HeadersInit = {};
       if (user) {
         headers['Authorization'] = `Bearer ${user.email}`;
@@ -74,7 +85,7 @@ export default function OrdersPage() {
 
       const response = await fetch('/api/orders', { headers });
       const data = await response.json();
-      
+
       setOrders(data);
       setLoading(false);
     } catch (error) {
@@ -115,7 +126,7 @@ export default function OrdersPage() {
     try {
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
-      
+
       const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (user) {
         headers['Authorization'] = `Bearer ${user.email}`;
@@ -139,7 +150,7 @@ export default function OrdersPage() {
     try {
       const userStr = localStorage.getItem('user');
       const user = userStr ? JSON.parse(userStr) : null;
-      
+
       const headers: HeadersInit = { 'Content-Type': 'application/json' };
       if (user) {
         headers['Authorization'] = `Bearer ${user.email}`;
@@ -160,6 +171,10 @@ export default function OrdersPage() {
 
   function getOrdersByStatus(status: string) {
     return orders.filter(order => order.status === status);
+  }
+
+  function getOrderNumber(id: string): string {
+    return `#${id.slice(-4)}`;
   }
 
   return (
@@ -204,30 +219,56 @@ export default function OrdersPage() {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <p className="font-bold">#{order.id.slice(-6)}</p>
+                        <p className="font-bold">{getOrderNumber(order.id)}</p>
                         <p className="text-sm text-gray-400">
                           {new Date(order.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        order.source === 'online' ? 'bg-blue-900 text-blue-300' : 'bg-green-900 text-green-300'
-                      }`}>
-                        {order.source === 'online' ? 'En ligne' : 'Boutique'}
-                      </span>
+                      <div className="flex gap-1">
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          order.source === 'online' ? 'bg-blue-900 text-blue-300' : 'bg-green-900 text-green-300'
+                        }`}>
+                          {order.source === 'online' ? 'En ligne' : 'Boutique'}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          order.fulfillment === 'DELIVERY' ? 'bg-purple-900 text-purple-300' : 'bg-yellow-900 text-yellow-300'
+                        }`}>
+                          {FULFILLMENT_LABELS[order.fulfillment] || order.fulfillment}
+                        </span>
+                      </div>
                     </div>
-                    
+
                     {order.customerName && (
-                      <p className="text-sm text-gray-300 mb-2">{order.customerName}</p>
+                      <p className="text-sm text-gray-300 mb-1">{order.customerName}</p>
                     )}
-                    
+                    {order.phone && (
+                      <p className="text-xs text-gray-400 mb-2">{order.phone}</p>
+                    )}
+
+                    {order.fulfillment === 'DELIVERY' && order.deliveryAddress && (
+                      <p className="text-xs text-gray-400 mb-2">
+                        📍 {order.deliveryAddress}
+                        {order.deliveryLandmark && ` (${order.deliveryLandmark})`}
+                      </p>
+                    )}
+
                     <div className="text-sm mb-3">
                       {order.items.map((item, idx) => (
                         <p key={idx}>{item.name} x{item.quantity}</p>
                       ))}
                     </div>
-                    
+
+                    {order.customerNote && (
+                      <p className="text-xs text-orange-400 mb-2 italic">Note: {order.customerNote}</p>
+                    )}
+
                     <div className="flex justify-between items-center gap-2">
-                      <p className="font-bold text-orange-500">{order.total} F</p>
+                      <div>
+                        <p className="font-bold text-orange-500">{order.total} F</p>
+                        {order.deliveryFee && (
+                          <p className="text-xs text-gray-400">+ {order.deliveryFee} F livraison</p>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         {status === 'pending' && (
                           <button

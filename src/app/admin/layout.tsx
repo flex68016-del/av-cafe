@@ -17,7 +17,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     if (userStr) {
-      setUser(JSON.parse(userStr));
+      const userData = JSON.parse(userStr);
+      setUser(userData);
+      
+      // Rediriger le manager vers daily-sales s'il essaie d'accéder à orders
+      if (userData.role === 'manager' && pathname === '/admin/orders') {
+        router.push('/admin/daily-sales');
+      }
     }
   }, [router, pathname]);
 
@@ -27,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const navLinks = [
-    { href: '/admin/orders', label: 'Commandes', showFor: ['manager', 'cashier'] },
+    { href: '/admin/orders', label: 'Commandes', showFor: ['cashier'] },
     { href: '/admin/daily-sales', label: 'Ventes du jour', showFor: ['manager'] },
     { href: '/admin/menu', label: 'Menu', showFor: ['manager'] },
   ];

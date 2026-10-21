@@ -31,7 +31,12 @@ export default function AdminLoginPage() {
       }
 
       localStorage.setItem('user', JSON.stringify(data.user));
-      router.push('/admin/orders');
+      // Rediriger selon le rôle
+      if (data.user.role === 'manager') {
+        router.push('/admin/daily-sales');
+      } else {
+        router.push('/admin/orders');
+      }
     } catch {
       setError('Erreur de connexion');
     } finally {

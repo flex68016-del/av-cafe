@@ -10,6 +10,12 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   completed: [],
 };
 
+const STATUS_TO_EVENT_TYPE: Record<string, 'ACCEPTED' | 'READY' | 'COMPLETED'> = {
+  preparing: 'ACCEPTED',
+  ready: 'READY',
+  completed: 'COMPLETED',
+};
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -36,9 +42,40 @@ export async function PATCH(
       return NextResponse.json({ error: 'Transition de statut invalide' }, { status: 400 });
     }
 
+    // Préparer les données de mise à jour selon le nouveau statut
+    const updateData: Record<string, unknown> = { status };
+    const eventType = STATUS_TO_EVENT_TYPE[status];
+
+    if (status === 'preparing') {
+      updateData.acceptedAt = new Date();
+    } else if (status === 'ready') {
+      updateData.readyAt = new Date();
+    } else if (status === 'completed') {
+      updateData.doneAt = new Date();
+    }
+
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status },
+      data: {
+        ...updateData,
+        events: eventType ? {
+          create: {
+            type: eventType as any,
+            note: order.fulfillment === 'DELIVERY' && status === 'completed' 
+              ? 'Commande livrée' 
+              : status === 'completed' 
+                ? 'Commande servie' 
+                : undefined,
+            userId: user?.id,
+          },
+        } : undefined,
+      },
+      include: {
+        items: true,
+        events: {
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     });
 
     return NextResponse.json(updatedOrder);

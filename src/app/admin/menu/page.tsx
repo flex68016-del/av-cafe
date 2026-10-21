@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Product {
   id: string;
@@ -38,6 +39,7 @@ export default function AdminMenuPage() {
     imageFile: null,
     available: true,
   });
+  const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -200,7 +202,7 @@ export default function AdminMenuPage() {
             setFormData({ name: '', description: '', price: '', category: '', image: '', imageFile: null, available: true });
             setShowAddModal(true);
           }}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg min-h-[44px]"
+          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-bold min-h-[44px]"
         >
           Ajouter un produit
         </button>
@@ -233,7 +235,7 @@ export default function AdminMenuPage() {
                 <td className="p-4">
                   <button
                     onClick={() => toggleAvailability(product)}
-                    className={`px-3 py-1 rounded text-sm min-h-[36px] ${
+                    className={`px-3 py-1 rounded text-sm font-bold min-h-[44px] ${
                       product.available ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'
                     }`}
                   >
@@ -244,13 +246,13 @@ export default function AdminMenuPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => openEditModal(product)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm min-h-[36px]"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-bold min-h-[44px]"
                     >
                       Modifier
                     </button>
                     <button
                       onClick={() => deleteProduct(product.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm min-h-[36px]"
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-bold min-h-[44px]"
                     >
                       Supprimer
                     </button>
@@ -263,103 +265,117 @@ export default function AdminMenuPage() {
       </div>
 
       {/* Modal d'ajout/modification */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">
-              {editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Nom</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[100px]"
-                  rows={3}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Prix (F)</label>
-                <input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Catégorie</label>
-                <input
-                  type="text"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Image</label>
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
-                    className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
-                  />
-                  <div className="text-center text-gray-500 text-sm">ou</div>
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div
+            initial={shouldReduceMotion ? {} : { opacity: 0 }}
+            animate={shouldReduceMotion ? {} : { opacity: 1 }}
+            exit={shouldReduceMotion ? {} : { opacity: 0 }}
+            transition={shouldReduceMotion ? {} : { duration: 0.15 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          >
+            <motion.div
+              initial={shouldReduceMotion ? {} : { scale: 0.95 }}
+              animate={shouldReduceMotion ? {} : { scale: 1 }}
+              exit={shouldReduceMotion ? {} : { scale: 0.95 }}
+              transition={shouldReduceMotion ? {} : { duration: 0.15 }}
+              className="bg-gray-900 rounded-lg p-6 max-w-md w-full"
+            >
+              <h2 className="text-xl font-bold mb-4">
+                {editingProduct ? 'Modifier le produit' : 'Ajouter un produit'}
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Nom</label>
                   <input
                     type="text"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
-                    placeholder="https://..."
+                    required
                   />
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="available"
-                  checked={formData.available}
-                  onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
-                  className="w-5 h-5"
-                />
-                <label htmlFor="available" className="text-sm text-gray-400">Disponible</label>
-              </div>
-              <div className="flex gap-4 justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setEditingProduct(null);
-                    setFormData({ name: '', description: '', price: '', category: '', image: '', imageFile: null, available: true });
-                  }}
-                  className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg min-h-[44px]"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg min-h-[44px]"
-                >
-                  {editingProduct ? 'Modifier' : 'Ajouter'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[100px]"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Prix (F)</label>
+                  <input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Catégorie</label>
+                  <input
+                    type="text"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Image</label>
+                  <div className="space-y-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setFormData({ ...formData, imageFile: e.target.files?.[0] || null })}
+                      className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+                    />
+                    <div className="text-center text-gray-500 text-sm">ou</div>
+                    <input
+                      type="text"
+                      value={formData.image}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+                      placeholder="https://..."
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="available"
+                    checked={formData.available}
+                    onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
+                    className="w-5 h-5"
+                  />
+                  <label htmlFor="available" className="text-sm text-gray-400">Disponible</label>
+                </div>
+                <div className="flex gap-4 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setEditingProduct(null);
+                      setFormData({ name: '', description: '', price: '', category: '', image: '', imageFile: null, available: true });
+                    }}
+                    className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-bold min-h-[44px]"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-bold min-h-[44px]"
+                  >
+                    {editingProduct ? 'Modifier' : 'Ajouter'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

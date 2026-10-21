@@ -31,6 +31,9 @@ export default function DailySalesPage() {
   const [dayData, setDayData] = useState<DailySalesData | null>(null);
   const [monthData, setMonthData] = useState<DailySalesData | null>(null);
   const [yearData, setYearData] = useState<DailySalesData | null>(null);
+  const [selectedDay, setSelectedDay] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [selectedYear, setSelectedYear] = useState(new Date().toISOString().slice(0, 4));
   const [loading, setLoading] = useState(true);
   const [showCloseDayModal, setShowCloseDayModal] = useState(false);
   const [closingDay, setClosingDay] = useState(false);
@@ -76,14 +79,10 @@ export default function DailySalesPage() {
   useEffect(() => {
     const fetchAllPeriods = async () => {
       setLoading(true);
-      const today = new Date().toISOString().split('T')[0];
-      const currentMonth = today.slice(0, 7);
-      const currentYear = today.slice(0, 4);
-
       const [day, month, year] = await Promise.all([
-        fetchDailySales(today, 'day'),
-        fetchDailySales(currentMonth, 'month'),
-        fetchDailySales(currentYear, 'year'),
+        fetchDailySales(selectedDay, 'day'),
+        fetchDailySales(selectedMonth, 'month'),
+        fetchDailySales(selectedYear, 'year'),
       ]);
 
       setDayData(day);
@@ -92,7 +91,7 @@ export default function DailySalesPage() {
       setLoading(false);
     };
     fetchAllPeriods();
-  }, [fetchDailySales]);
+  }, [selectedDay, selectedMonth, selectedYear, fetchDailySales]);
 
   async function closeDay() {
     setClosingDay(true);
@@ -157,12 +156,47 @@ export default function DailySalesPage() {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-heading font-bold text-orange-500 mb-4">Ventes</h1>
 
+      {/* Sélecteurs de date */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Jour</label>
+          <input
+            type="date"
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(e.target.value)}
+            className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Mois</label>
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Année</label>
+          <input
+            type="number"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            min="2020"
+            max="2100"
+            className="w-full bg-gray-800 border border-gray-700 text-white px-4 py-2 rounded-lg min-h-[44px]"
+          />
+        </div>
+      </div>
+
       {/* Affichage jour/mois/année en parallèle */}
       <div className="space-y-6">
         {/* KPIs du jour */}
         {dayData && (
           <div className="bg-gray-900 rounded-lg p-4">
-            <h2 className="text-xl font-bold mb-4 text-orange-500">Aujourd&apos;hui</h2>
+            <h2 className="text-xl font-bold mb-4 text-orange-500">
+              {selectedDay === new Date().toISOString().split('T')[0] ? "Aujourd'hui" : selectedDay}
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <motion.div
                 initial={shouldReduceMotion ? {} : { opacity: 0, y: 20 }}
@@ -256,7 +290,9 @@ export default function DailySalesPage() {
         {/* KPIs du mois */}
         {monthData && (
           <div className="bg-gray-900 rounded-lg p-4">
-            <h2 className="text-xl font-bold mb-4 text-orange-500">Ce mois</h2>
+            <h2 className="text-xl font-bold mb-4 text-orange-500">
+              {selectedMonth === new Date().toISOString().slice(0, 7) ? "Ce mois" : selectedMonth}
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <motion.div
                 initial={shouldReduceMotion ? {} : { opacity: 0, y: 20 }}
@@ -340,7 +376,9 @@ export default function DailySalesPage() {
         {/* KPIs de l'année */}
         {yearData && (
           <div className="bg-gray-900 rounded-lg p-4">
-            <h2 className="text-xl font-bold mb-4 text-orange-500">Cette année</h2>
+            <h2 className="text-xl font-bold mb-4 text-orange-500">
+              {selectedYear === new Date().toISOString().slice(0, 4) ? "Cette année" : selectedYear}
+            </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <motion.div
                 initial={shouldReduceMotion ? {} : { opacity: 0, y: 20 }}

@@ -76,6 +76,99 @@ async function main() {
   });
 
   console.log(`✅ Utilisateur caissier créé: ${cashierEmail}`);
+
+  // Créer des commandes de test sur différentes dates
+  const dbProducts = await prisma.product.findMany();
+  
+  // Commandes d'hier
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(14, 0, 0, 0);
+
+  for (let i = 0; i < 5; i++) {
+    const orderTime = new Date(yesterday);
+    orderTime.setHours(10 + i);
+    
+    const orderItems = [
+      { productId: dbProducts[0].id, quantity: 1, price: dbProducts[0].price, name: dbProducts[0].name },
+      { productId: dbProducts[4].id, quantity: 1, price: dbProducts[4].price, name: dbProducts[4].name },
+    ];
+
+    await prisma.order.create({
+      data: {
+        total: dbProducts[0].price + dbProducts[4].price,
+        status: i < 3 ? 'completed' : 'preparing',
+        source: i % 2 === 0 ? 'online' : 'offline',
+        customerName: `Client ${i + 1}`,
+        customerPhone: `+228${90100000 + i}`,
+        items: {
+          create: orderItems,
+        },
+        createdAt: orderTime,
+      },
+    });
+  }
+
+  // Commandes de la semaine dernière
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 7);
+  lastWeek.setHours(12, 0, 0, 0);
+
+  for (let i = 0; i < 8; i++) {
+    const orderTime = new Date(lastWeek);
+    orderTime.setHours(11 + i);
+
+    const orderItems = [
+      { productId: dbProducts[1].id, quantity: 1, price: dbProducts[1].price, name: dbProducts[1].name },
+      { productId: dbProducts[8].id, quantity: 1, price: dbProducts[8].price, name: dbProducts[8].name },
+    ];
+
+    await prisma.order.create({
+      data: {
+        total: dbProducts[1].price + dbProducts[8].price,
+        status: 'completed',
+        source: i % 3 === 0 ? 'online' : 'offline',
+        customerName: `Client Semaine ${i + 1}`,
+        customerPhone: `+228${90200000 + i}`,
+        items: {
+          create: orderItems,
+        },
+        createdAt: orderTime,
+      },
+    });
+  }
+
+  // Commandes du mois dernier
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  lastMonth.setDate(15);
+  lastMonth.setHours(15, 0, 0, 0);
+
+  for (let i = 0; i < 15; i++) {
+    const orderTime = new Date(lastMonth);
+    orderTime.setDate(15 + i);
+
+    const orderItems = [
+      { productId: dbProducts[2].id, quantity: 1, price: dbProducts[2].price, name: dbProducts[2].name },
+      { productId: dbProducts[5].id, quantity: 1, price: dbProducts[5].price, name: dbProducts[5].name },
+    ];
+
+    await prisma.order.create({
+      data: {
+        total: dbProducts[2].price + dbProducts[5].price,
+        status: 'completed',
+        source: i % 2 === 0 ? 'online' : 'offline',
+        customerName: `Client Mois ${i + 1}`,
+        customerPhone: `+228${90300000 + i}`,
+        items: {
+          create: orderItems,
+        },
+        createdAt: orderTime,
+      },
+    });
+  }
+
+  console.log('✅ Commandes de test créées (hier, semaine dernière, mois dernier)');
 }
 
 main()

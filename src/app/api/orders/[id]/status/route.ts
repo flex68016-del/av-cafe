@@ -10,7 +10,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   completed: [],
 };
 
-const STATUS_TO_EVENT_TYPE: Record<string, 'ACCEPTED' | 'READY' | 'COMPLETED'> = {
+const STATUS_TO_EVENT_TYPE: Record<string, 'CREATED' | 'ACCEPTED' | 'READY' | 'COMPLETED' | 'CANCELLED' | 'NOTE'> = {
   preparing: 'ACCEPTED',
   ready: 'READY',
   completed: 'COMPLETED',
@@ -60,7 +60,7 @@ export async function PATCH(
         ...updateData,
         events: eventType ? {
           create: {
-            type: eventType as any,
+            type: eventType,
             note: order.fulfillment === 'DELIVERY' && status === 'completed' 
               ? 'Commande livrée' 
               : status === 'completed' 

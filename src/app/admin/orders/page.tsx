@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Order {
@@ -59,6 +60,7 @@ const FULFILLMENT_COLORS: Record<string, string> = {
 };
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -124,14 +126,14 @@ export default function OrdersPage() {
   useEffect(() => {
     const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
     if (!userStr) {
-      window.location.href = '/admin';
+      router.push('/admin');
       return;
     }
 
     fetchOrders();
     const interval = setInterval(fetchOrders, 5000);
     return () => clearInterval(interval);
-  }, [fetchOrders]);
+  }, [fetchOrders, router]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -337,7 +339,7 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-[#0B0B0B] text-white">
       {/* Bannière orange */}
       <div className="bg-[#F57C1F] px-4 py-3">
-        <div className="container mx-auto flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-heading font-bold">
               {pendingCount} commande{pendingCount !== 1 ? 's' : ''} à traiter
@@ -375,7 +377,7 @@ export default function OrdersPage() {
 
       {/* Filtres */}
       <div className="bg-gray-900 border-b border-gray-800 px-4 py-3">
-        <div className="container mx-auto flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-400">Statut :</span>
             {[
@@ -422,7 +424,7 @@ export default function OrdersPage() {
       </div>
 
       {/* Contenu principal */}
-      <div className="container mx-auto p-4 flex gap-4">
+      <div className="p-4 flex gap-4">
         {/* File de commandes */}
         <div className={`flex-1 ${isMobileDetailOpen ? 'hidden' : 'block'}`}>
           {loading ? (
@@ -435,7 +437,7 @@ export default function OrdersPage() {
                   onClick={() => handleOrderClick(order)}
                   initial={shouldReduceMotion ? {} : { opacity: 0, x: -20 }}
                   animate={shouldReduceMotion ? {} : { opacity: 1, x: 0 }}
-                  transition={shouldReduceMotion ? {} : { duration: 0.15 }}
+                  transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
                   className={`w-full text-left bg-gray-900 rounded-lg p-4 hover:bg-gray-800 transition-colors ${
                     selectedOrder?.id === order.id ? 'ring-2 ring-orange-500' : ''
                   } ${newOrderIds.has(order.id) ? 'ring-2 ring-orange-500 animate-pulse' : ''}`}
@@ -478,10 +480,10 @@ export default function OrdersPage() {
             <>
               {/* Desktop */}
               <motion.div
-                initial={shouldReduceMotion ? {} : { opacity: 0, x: 20 }}
-                animate={shouldReduceMotion ? {} : { opacity: 1, x: 0 }}
-                exit={shouldReduceMotion ? {} : { opacity: 0, x: 20 }}
-                transition={shouldReduceMotion ? {} : { duration: 0.15 }}
+                initial={shouldReduceMotion ? undefined : { opacity: 0, x: 20 }}
+                animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
+                exit={shouldReduceMotion ? undefined : { opacity: 0, x: 20 }}
+                transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
                 className="hidden lg:block w-96 bg-gray-900 rounded-lg p-6"
               >
                 {selectedOrder && <OrderDetail order={selectedOrder} onNextStatus={() => {
@@ -498,10 +500,10 @@ export default function OrdersPage() {
 
               {/* Mobile */}
               <motion.div
-                initial={shouldReduceMotion ? {} : { opacity: 0, y: '100%' }}
-                animate={shouldReduceMotion ? {} : { opacity: 1, y: 0 }}
-                exit={shouldReduceMotion ? {} : { opacity: 0, y: '100%' }}
-                transition={shouldReduceMotion ? {} : { duration: 0.15 }}
+                initial={shouldReduceMotion ? undefined : { opacity: 0, y: '100%' }}
+                animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+                exit={shouldReduceMotion ? undefined : { opacity: 0, y: '100%' }}
+                transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
                 className={`lg:hidden fixed inset-0 bg-[#0B0B0B] z-50 ${isMobileDetailOpen ? 'block' : 'hidden'}`}
               >
                 {selectedOrder && (
@@ -540,9 +542,9 @@ export default function OrdersPage() {
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <motion.div
-            initial={shouldReduceMotion ? {} : { opacity: 0, scale: 0.95 }}
-            animate={shouldReduceMotion ? {} : { opacity: 1, scale: 1 }}
-            transition={shouldReduceMotion ? {} : { duration: 0.15 }}
+            initial={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.95 }}
+            animate={shouldReduceMotion ? undefined : { opacity: 1, scale: 1 }}
+            transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
             className="bg-gray-900 rounded-lg p-6 max-w-md w-full"
           >
             <h2 className="text-xl font-bold mb-4">Annuler la commande</h2>

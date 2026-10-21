@@ -50,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Mobile menu button */}
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="lg:hidden fixed top-4 left-4 z-50 bg-orange-500 p-2 rounded-lg min-h-[44px] min-w-[44px]"
+            className="lg:hidden fixed top-4 left-4 z-50 bg-orange p-2 rounded-lg min-h-[44px] min-w-[44px] no-print"
             aria-label="Menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
 
           {/* Sidebar */}
-          <aside className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-[230px] bg-bg-sidebar border-r border-border`}>
+          <aside className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-[230px] bg-bg-sidebar border-r border-border no-print`}>
             {/* Logo */}
             <div className="p-6 border-b border-border">
               <button
@@ -126,7 +126,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Page Content */}
-      <main className={`flex-1 ${pathname !== '/admin' ? 'lg:ml-64' : ''} ${pathname !== '/admin' ? 'pt-16 lg:pt-0' : ''}`}>{children}</main>
+      <main className={`flex-1 ${pathname !== '/admin' ? 'lg:ml-[230px]' : ''} ${pathname !== '/admin' ? 'pt-16 lg:pt-0' : ''}`}>{children}</main>
     </div>
   );
 }

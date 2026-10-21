@@ -624,186 +624,249 @@ function OrderDetail({ order, isManager, onUpdate, onCancel, isUpdating }: { ord
 
   const canCancel = order.status !== 'completed' && (order.status !== 'ready' || isManager);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
-    <div className="bg-bg-card border border-border rounded-[18px] p-6">
-      {/* En-tête */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-[40px] font-bold text-heading uppercase leading-none mb-2">
-            COMMANDE #{order.id.slice(-4).padStart(4, '0')}
-          </h3>
-          <div className="text-[14px] text-text-tertiary">
-            {STATUS_LABELS[order.status]} à {new Date(order.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-            {' · '}
-            {order.source === 'online' ? 'en ligne' : 'boutique'}
+    <>
+      <div className="bg-bg-card border border-border rounded-[18px] p-6 no-print">
+        {/* En-tête */}
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-[40px] font-bold text-heading uppercase leading-none mb-2">
+              COMMANDE #{order.id.slice(-4).padStart(4, '0')}
+            </h3>
+            <div className="text-[14px] text-text-tertiary">
+              {STATUS_LABELS[order.status]} à {new Date(order.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {' · '}
+              {order.source === 'online' ? 'en ligne' : 'boutique'}
+            </div>
           </div>
+          <span className={`text-[12px] font-bold px-[10px] py-[3px] rounded-[999px] ${
+            order.fulfillment === 'DELIVERY'
+              ? 'border border-orange text-orange'
+              : 'bg-bg-subcard text-text-primary'
+          }`}>
+            {FULFILLMENT_LABELS[order.fulfillment]}
+          </span>
         </div>
-        <span className={`text-[12px] font-bold px-[10px] py-[3px] rounded-[999px] ${
-          order.fulfillment === 'DELIVERY'
-            ? 'border border-orange text-orange'
-            : 'bg-bg-subcard text-text-primary'
-        }`}>
-          {FULFILLMENT_LABELS[order.fulfillment]}
-        </span>
-      </div>
 
-      {/* Parcours en 4 étapes */}
-      {order.status !== 'cancelled' ? (
-        <div className="flex justify-between mb-6">
-          {['Reçue', 'En préparation', 'Prête', order.fulfillment === 'DELIVERY' ? 'Livrée' : 'Servie'].map((step, index) => {
-            const stepStatuses = ['pending', 'preparing', 'ready', 'completed'];
-            const isCurrent = stepStatuses[index] === order.status;
-            const isPast = index < stepStatuses.indexOf(order.status);
-            
-            return (
-              <div key={step} className="flex flex-col items-center flex-1">
-                <div className={`w-[34px] h-[34px] rounded-full flex items-center justify-center text-sm font-bold mb-1 ${
-                  isCurrent ? 'bg-orange text-orange-text' : isPast ? 'bg-orange text-orange-text' : 'bg-bg-subcard text-text-tertiary'
-                }`}>
-                  {isPast ? '✓' : index + 1}
+        {/* Parcours en 4 étapes */}
+        {order.status !== 'cancelled' ? (
+          <div className="flex justify-between mb-6">
+            {['Reçue', 'En préparation', 'Prête', order.fulfillment === 'DELIVERY' ? 'Livrée' : 'Servie'].map((step, index) => {
+              const stepStatuses = ['pending', 'preparing', 'ready', 'completed'];
+              const isCurrent = stepStatuses[index] === order.status;
+              const isPast = index < stepStatuses.indexOf(order.status);
+              
+              return (
+                <div key={step} className="flex flex-col items-center flex-1">
+                  <div className={`w-[34px] h-[34px] rounded-full flex items-center justify-center text-sm font-bold mb-1 ${
+                    isCurrent ? 'bg-orange text-orange-text' : isPast ? 'bg-orange text-orange-text' : 'bg-bg-subcard text-text-tertiary'
+                  }`}>
+                    {isPast ? '✓' : index + 1}
+                  </div>
+                  <span className={`text-[13px] ${isCurrent ? 'text-text-primary font-bold' : isPast ? 'text-text-primary' : 'text-text-tertiary'}`}>
+                    {step}
+                  </span>
                 </div>
-                <span className={`text-[13px] ${isCurrent ? 'text-text-primary font-bold' : isPast ? 'text-text-primary' : 'text-text-tertiary'}`}>
-                  {step}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="bg-status-error/20 border border-status-error rounded-[12px] p-4 mb-6">
-          <p className="text-status-error font-bold">Annulée</p>
-          {order.cancelReason && <p className="text-sm text-text-tertiary mt-1">{order.cancelReason}</p>}
-        </div>
-      )}
-
-      {/* Blocs d'information */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        {/* Client */}
-        <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
-          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Client</div>
-          <div className="text-[18px] font-bold">{order.customerName || 'Non renseigné'}</div>
-        </div>
-
-        {/* Téléphone */}
-        <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
-          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Téléphone</div>
-          {order.phone ? (
-            <a href={`tel:${order.phone}`} className="text-[18px] font-bold text-orange hover:underline">
-              {order.phone}
-            </a>
-          ) : (
-            <div className="text-[18px] font-bold text-text-tertiary">Non renseigné</div>
-          )}
-        </div>
-
-        {/* Mode */}
-        <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
-          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Mode</div>
-          <div className="text-[18px] font-bold">{FULFILLMENT_LABELS[order.fulfillment]}</div>
-        </div>
-
-        {/* Adresse ou Table */}
-        {order.fulfillment === 'DELIVERY' ? (
-          <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
-            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Adresse</div>
-            <div className="text-[18px] font-bold">{order.deliveryAddress || 'Non renseigné'}</div>
-            {order.deliveryLandmark && (
-              <div className="text-[14px] text-text-secondary mt-1">Repère : {order.deliveryLandmark}</div>
-            )}
+              );
+            })}
           </div>
         ) : (
+          <div className="bg-status-error/20 border border-status-error rounded-[12px] p-4 mb-6">
+            <p className="text-status-error font-bold">Annulée</p>
+            {order.cancelReason && <p className="text-sm text-text-tertiary mt-1">{order.cancelReason}</p>}
+          </div>
+        )}
+
+        {/* Blocs d'information */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {/* Client */}
           <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
-            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Table</div>
-            <div className="text-[18px] font-bold">Non renseigné</div>
+            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Client</div>
+            <div className="text-[18px] font-bold">{order.customerName || 'Non renseigné'}</div>
           </div>
-        )}
 
-        {/* Paiement */}
-        <div className="col-span-2 bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
-          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Paiement</div>
-          <div className="text-[18px] font-bold">À confirmer</div>
-        </div>
-      </div>
+          {/* Téléphone */}
+          <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Téléphone</div>
+            {order.phone ? (
+              <a href={`tel:${order.phone}`} className="text-[18px] font-bold text-orange hover:underline">
+                {order.phone}
+              </a>
+            ) : (
+              <div className="text-[18px] font-bold text-text-tertiary">Non renseigné</div>
+            )}
+          </div>
 
-      {/* Articles */}
-      <div className="mb-6">
-        <h4 className="text-[24px] font-bold text-heading uppercase mb-3">ARTICLES</h4>
-        <div className="space-y-2">
-          {order.items.map((item, index) => (
-            <div key={index} className="flex justify-between items-center py-2 border-b border-border">
-              <span className="font-bold">
-                {item.quantity}× {item.name}
-              </span>
-              <span className="text-orange font-bold">{item.price.toLocaleString('fr-FR')} F</span>
+          {/* Mode */}
+          <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Mode</div>
+            <div className="text-[18px] font-bold">{FULFILLMENT_LABELS[order.fulfillment]}</div>
+          </div>
+
+          {/* Adresse ou Table */}
+          {order.fulfillment === 'DELIVERY' ? (
+            <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+              <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Adresse</div>
+              <div className="text-[18px] font-bold">{order.deliveryAddress || 'Non renseigné'}</div>
+              {order.deliveryLandmark && (
+                <div className="text-[14px] text-text-secondary mt-1">Repère : {order.deliveryLandmark}</div>
+              )}
             </div>
-          ))}
-          <div className="flex justify-between items-center py-2 border-b border-border">
-            <span className="text-[22px] font-bold">Total</span>
-            <span className="text-[22px] font-bold text-orange">{order.total.toLocaleString('fr-FR')} F</span>
-          </div>
-          {order.deliveryFee !== null && (
-            <div className="text-[13px] text-text-tertiary py-2">
-              Frais de livraison : {order.deliveryFee.toLocaleString('fr-FR')} F
+          ) : (
+            <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+              <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Table</div>
+              <div className="text-[18px] font-bold">Non renseigné</div>
             </div>
           )}
-          {order.customerNote && (
-            <div className="text-[13px] text-text-tertiary py-2">
-              Note : {order.customerNote}
-            </div>
-          )}
+
+          {/* Paiement */}
+          <div className="col-span-2 bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Paiement</div>
+            <div className="text-[18px] font-bold">À confirmer</div>
+          </div>
         </div>
-      </div>
 
-      {/* Bouton principal */}
-      {nextActionLabel && nextStatus && (
-        <button
-          onClick={() => onUpdate(order.id, nextStatus)}
-          disabled={isUpdating}
-          className="w-full bg-orange text-orange-text text-[18px] font-bold rounded-[14px] min-h-[56px] mb-3 transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isUpdating ? 'Envoi…' : nextActionLabel}
-        </button>
-      )}
+        {/* Articles */}
+        <div className="mb-6">
+          <h4 className="text-[24px] font-bold text-heading uppercase mb-3">ARTICLES</h4>
+          <div className="space-y-2">
+            {order.items.map((item, index) => (
+              <div key={index} className="flex justify-between items-center py-2 border-b border-border">
+                <span className="font-bold">
+                  {item.quantity}× {item.name}
+                </span>
+                <span className="text-orange font-bold">{item.price.toLocaleString('fr-FR')} F</span>
+              </div>
+            ))}
+            <div className="flex justify-between items-center py-2 border-b border-border">
+              <span className="text-[22px] font-bold">Total</span>
+              <span className="text-[22px] font-bold text-orange">{order.total.toLocaleString('fr-FR')} F</span>
+            </div>
+            {order.deliveryFee !== null && (
+              <div className="text-[13px] text-text-tertiary py-2">
+                Frais de livraison : {order.deliveryFee.toLocaleString('fr-FR')} F
+              </div>
+            )}
+            {order.customerNote && (
+              <div className="text-[13px] text-text-tertiary py-2">
+                Note : {order.customerNote}
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* Boutons secondaires */}
-      <div className="grid grid-cols-3 gap-[10px]">
-        {order.phone && (
-          <a
-            href={`tel:${order.phone}`}
-            className="bg-transparent border-2 border-border-secondary text-text-primary font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-text-secondary transition-colors"
-          >
-            Appeler
-          </a>
-        )}
-        <button
-          onClick={() => window.print()}
-          className="bg-transparent border-2 border-border-secondary text-text-primary font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-text-secondary transition-colors"
-        >
-          Imprimer
-        </button>
-        {canCancel && (
+        {/* Bouton principal */}
+        {nextActionLabel && nextStatus && (
           <button
-            onClick={onCancel}
-            className="bg-transparent border-2 border-border-cancel text-status-error font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-status-error transition-colors"
+            onClick={() => onUpdate(order.id, nextStatus)}
+            disabled={isUpdating}
+            className="w-full bg-orange text-orange-text text-[18px] font-bold rounded-[14px] min-h-[56px] mb-3 transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Annuler
+            {isUpdating ? 'Envoi…' : nextActionLabel}
           </button>
         )}
+
+        {/* Boutons secondaires */}
+        <div className="grid grid-cols-3 gap-[10px]">
+          {order.phone && (
+            <a
+              href={`tel:${order.phone}`}
+              className="bg-transparent border-2 border-border-secondary text-text-primary font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-text-secondary transition-colors"
+            >
+              Appeler
+            </a>
+          )}
+          <button
+            onClick={handlePrint}
+            className="bg-transparent border-2 border-border-secondary text-text-primary font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-text-secondary transition-colors"
+          >
+            Imprimer
+          </button>
+          {canCancel && (
+            <button
+              onClick={onCancel}
+              className="bg-transparent border-2 border-border-cancel text-status-error font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-status-error transition-colors"
+            >
+              Annuler
+            </button>
+          )}
+        </div>
+
+        {/* Historique */}
+        <div className="border-t border-border mt-6 pt-[14px]">
+          <h4 className="text-text-primary font-bold mb-3">Historique</h4>
+          <div className="space-y-2">
+            {order.events.map((event, index) => (
+              <div key={index} className="text-[14px] text-text-tertiary leading-[1.7]">
+                {new Date(event.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                {' · '}
+                {event.note || event.type}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Historique */}
-      <div className="border-t border-border mt-6 pt-[14px]">
-        <h4 className="text-text-primary font-bold mb-3">Historique</h4>
-        <div className="space-y-2">
-          {order.events.map((event, index) => (
-            <div key={index} className="text-[14px] text-text-tertiary leading-[1.7]">
-              {new Date(event.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-              {' · '}
-              {event.note || event.type}
+      {/* Version imprimable (ticket 80mm) */}
+      <div className="ticket-print hidden print:block">
+        <div className="order-header">
+          <h1>AVENUE CAFÉ</h1>
+          <h2>Commande #{order.id.slice(-4).padStart(4, '0')}</h2>
+          <div className="order-detail">
+            {new Date(order.createdAt).toLocaleString('fr-FR')}
+          </div>
+          <div className="order-detail">
+            {STATUS_LABELS[order.status]} · {FULFILLMENT_LABELS[order.fulfillment]}
+          </div>
+        </div>
+
+        <div className="order-detail">
+          <strong>Client :</strong> {order.customerName || 'Non renseigné'}
+        </div>
+        {order.phone && (
+          <div className="order-detail">
+            <strong>Tél :</strong> {order.phone}
+          </div>
+        )}
+        {order.fulfillment === 'DELIVERY' && order.deliveryAddress && (
+          <div className="order-detail">
+            <strong>Adresse :</strong> {order.deliveryAddress}
+            {order.deliveryLandmark && ` (${order.deliveryLandmark})`}
+          </div>
+        )}
+
+        <div className="order-items">
+          {order.items.map((item, index) => (
+            <div key={index} className="order-item">
+              <span>{item.quantity}× {item.name}</span>
+              <span>{item.price.toLocaleString('fr-FR')} F</span>
             </div>
           ))}
         </div>
+
+        <div className="order-total">
+          <div className="order-item">
+            <span>Total</span>
+            <span>{order.total.toLocaleString('fr-FR')} F</span>
+          </div>
+          {order.deliveryFee !== null && (
+            <div className="order-item">
+              <span>Frais livraison</span>
+              <span>{order.deliveryFee.toLocaleString('fr-FR')} F</span>
+            </div>
+          )}
+        </div>
+
+        {order.customerNote && (
+          <div className="order-detail">
+            <strong>Note :</strong> {order.customerNote}
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }

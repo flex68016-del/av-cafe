@@ -274,32 +274,38 @@ describe('Validations de commande', () => {
     it('affiche Marquer livrée pour ready (livraison)', () => {
       const status = 'ready';
       const fulfillment = 'DELIVERY';
-      const label = {
-        pending: 'Accepter et lancer la préparation',
-        preparing: 'Marquer prête',
-        ready: fulfillment === 'DELIVERY' ? 'Marquer livrée' : 'Marquer servie',
-      }[status];
+      const labelMap: Record<string, Record<string, string>> = {
+        ready: {
+          DELIVERY: 'Marquer livrée',
+          DINE_IN: 'Marquer servie',
+        },
+      };
+      const label = labelMap[status]?.[fulfillment];
       expect(label).toBe('Marquer livrée');
     });
 
     it('affiche Marquer servie pour ready (sur place)', () => {
       const status = 'ready';
       const fulfillment = 'DINE_IN';
-      const label = {
-        pending: 'Accepter et lancer la préparation',
-        preparing: 'Marquer prête',
-        ready: fulfillment === 'DELIVERY' ? 'Marquer livrée' : 'Marquer servie',
-      }[status];
+      const labelMap: Record<string, Record<string, string>> = {
+        ready: {
+          DELIVERY: 'Marquer livrée',
+          DINE_IN: 'Marquer servie',
+        },
+      };
+      const label = labelMap[status]?.[fulfillment];
       expect(label).toBe('Marquer servie');
     });
 
     it('n&apos;affiche aucun bouton pour completed', () => {
       const status = 'completed';
-      const label = {
+      const labels: Record<string, string | undefined> = {
         pending: 'Accepter et lancer la préparation',
         preparing: 'Marquer prête',
         ready: 'Marquer livrée',
-      }[status];
+        completed: undefined,
+      };
+      const label = labels[status];
       expect(label).toBeUndefined();
     });
   });

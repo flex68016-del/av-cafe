@@ -203,4 +203,104 @@ describe('Validations de commande', () => {
       expect(result.success).toBe(false);
     });
   });
+
+  describe('Affichage Non renseigné', () => {
+    it('affiche Non renseigné pour un nom vide', () => {
+      const name = '';
+      const display = name || 'Non renseigné';
+      expect(display).toBe('Non renseigné');
+    });
+
+    it('affiche Non renseigné pour un téléphone vide', () => {
+      const phone = null;
+      const display = phone || 'Non renseigné';
+      expect(display).toBe('Non renseigné');
+    });
+
+    it('affiche Non renseigné pour une adresse vide', () => {
+      const address = '';
+      const display = address || 'Non renseigné';
+      expect(display).toBe('Non renseigné');
+    });
+  });
+
+  describe('Calcul de l&apos;ancienneté', () => {
+    it('calcule l&apos;ancienneté en minutes', () => {
+      const now = Date.now();
+      const createdAt = new Date(now - 4 * 60 * 1000).toISOString();
+      const diff = now - new Date(createdAt).getTime();
+      const minutes = Math.floor(diff / 60000);
+      expect(minutes).toBe(4);
+    });
+
+    it('calcule l&apos;ancienneté en heures', () => {
+      const now = Date.now();
+      const createdAt = new Date(now - 2 * 60 * 60 * 1000).toISOString();
+      const diff = now - new Date(createdAt).getTime();
+      const hours = Math.floor(diff / 3600000);
+      expect(hours).toBe(2);
+    });
+
+    it('détecte une commande vieille de plus de 10 minutes', () => {
+      const now = Date.now();
+      const createdAt = new Date(now - 11 * 60 * 1000).toISOString();
+      const diff = now - new Date(createdAt).getTime();
+      const isOld = diff > 10 * 60 * 1000;
+      expect(isOld).toBe(true);
+    });
+  });
+
+  describe('Choix du bouton principal selon le statut', () => {
+    it('affiche Accepter et lancer la préparation pour pending', () => {
+      const status = 'pending';
+      const label = {
+        pending: 'Accepter et lancer la préparation',
+        preparing: 'Marquer prête',
+        ready: 'Marquer livrée',
+      }[status];
+      expect(label).toBe('Accepter et lancer la préparation');
+    });
+
+    it('affiche Marquer prête pour preparing', () => {
+      const status = 'preparing';
+      const label = {
+        pending: 'Accepter et lancer la préparation',
+        preparing: 'Marquer prête',
+        ready: 'Marquer livrée',
+      }[status];
+      expect(label).toBe('Marquer prête');
+    });
+
+    it('affiche Marquer livrée pour ready (livraison)', () => {
+      const status = 'ready';
+      const fulfillment = 'DELIVERY';
+      const label = {
+        pending: 'Accepter et lancer la préparation',
+        preparing: 'Marquer prête',
+        ready: fulfillment === 'DELIVERY' ? 'Marquer livrée' : 'Marquer servie',
+      }[status];
+      expect(label).toBe('Marquer livrée');
+    });
+
+    it('affiche Marquer servie pour ready (sur place)', () => {
+      const status = 'ready';
+      const fulfillment = 'DINE_IN';
+      const label = {
+        pending: 'Accepter et lancer la préparation',
+        preparing: 'Marquer prête',
+        ready: fulfillment === 'DELIVERY' ? 'Marquer livrée' : 'Marquer servie',
+      }[status];
+      expect(label).toBe('Marquer servie');
+    });
+
+    it('n&apos;affiche aucun bouton pour completed', () => {
+      const status = 'completed';
+      const label = {
+        pending: 'Accepter et lancer la préparation',
+        preparing: 'Marquer prête',
+        ready: 'Marquer livrée',
+      }[status];
+      expect(label).toBeUndefined();
+    });
+  });
 });

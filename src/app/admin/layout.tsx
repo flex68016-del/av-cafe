@@ -3,7 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import Logo from '@/components/Logo';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -64,9 +63,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
 
           {/* Sidebar */}
-          <aside className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-64 bg-gray-900 border-r border-gray-800`}>
+          <aside className={`fixed left-0 top-0 bottom-0 z-40 flex flex-col transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 w-[230px] bg-bg-sidebar border-r border-border`}>
             {/* Logo */}
-            <div className="p-6 border-b border-gray-800">
+            <div className="p-6 border-b border-border">
               <button
                 onClick={() => {
                   router.push(user?.role === 'manager' ? '/admin/daily-sales' : '/admin/orders');
@@ -74,12 +73,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 }}
                 className="h-12"
               >
-                <Logo variant="marque" color="orange" size={100} className="h-10 w-auto" />
+                <div className="text-heading font-bold text-[28px] uppercase leading-none">
+                  AVENUE
+                  <span className="text-orange">CAFÉ</span>
+                </div>
+                <div className="text-[12px] text-text-tertiary mt-1">Administration</div>
               </button>
             </div>
 
             {/* Navigation Links */}
-            <nav className="flex-1 p-4 space-y-2">
+            <nav className="flex-1 p-4 space-y-[6px]">
               {visibleLinks.map((link) => (
                 <button
                   key={link.href}
@@ -87,10 +90,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     router.push(link.href);
                     setIsSidebarOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors min-h-[44px] flex items-center ${
+                  className={`w-full text-left px-[14px] py-3 rounded-[10px] text-[16px] font-medium transition-colors min-h-[44px] flex items-center ${
                     pathname === link.href
-                      ? 'bg-orange-500/20 text-orange-500 border border-orange-500/30'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                      ? 'bg-orange text-orange-text font-bold'
+                      : 'text-text-sidebar-inactive hover:bg-bg-card'
                   }`}
                 >
                   {link.label}
@@ -99,13 +102,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </nav>
 
             {/* Logout */}
-            <div className="p-4 border-t border-gray-800">
+            <div className="p-4 border-t border-border">
               <button
                 onClick={() => {
                   handleLogout();
                   setIsSidebarOpen(false);
                 }}
-                className="w-full bg-gray-800 hover:bg-gray-700 px-4 py-3 rounded-lg text-sm min-h-[44px] text-left"
+                className="w-full bg-bg-card hover:bg-bg-subcard px-4 py-3 rounded-[10px] text-sm min-h-[44px] text-left"
               >
                 Déconnexion
               </button>

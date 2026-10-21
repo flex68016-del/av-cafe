@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ORDER_CONFIG } from '@/lib/config';
 
 interface Order {
   id: string;
@@ -16,6 +17,7 @@ interface Order {
   deliveryLandmark: string | null;
   deliveryFee: number | null;
   customerNote: string | null;
+  cancelReason: string | null;
   createdAt: string;
   acceptedAt: string | null;
   readyAt: string | null;
@@ -24,14 +26,6 @@ interface Order {
   items: Array<{ name: string; quantity: number; price: number }>;
   events: Array<{ type: string; note: string | null; createdAt: string; userId: string | null }>;
 }
-
-const STATUS_TRANSITIONS: Record<string, string[]> = {
-  pending: ['preparing', 'cancelled'],
-  preparing: ['ready'],
-  ready: ['completed'],
-  completed: [],
-  cancelled: [],
-};
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Reçue',
@@ -42,21 +36,16 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-orange-500',
-  preparing: 'bg-yellow-500',
-  ready: 'bg-green-500',
-  completed: 'bg-gray-500',
-  cancelled: 'bg-red-500',
+  pending: 'var(--color-status-received)',
+  preparing: 'var(--color-status-preparing)',
+  ready: 'var(--color-status-ready)',
+  completed: 'var(--color-status-completed)',
+  cancelled: 'var(--color-status-error)',
 };
 
 const FULFILLMENT_LABELS: Record<string, string> = {
   DELIVERY: 'Livraison',
   DINE_IN: 'Sur place',
-};
-
-const FULFILLMENT_COLORS: Record<string, string> = {
-  DELIVERY: 'bg-purple-900 text-purple-300',
-  DINE_IN: 'bg-yellow-900 text-yellow-300',
 };
 
 export default function OrdersPage() {
@@ -69,11 +58,11 @@ export default function OrdersPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [error, setError] = useState('');
-  const [conflictError, setConflictError] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterMode, setFilterMode] = useState<string>('all');
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const shouldReduceMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -146,11 +135,9 @@ export default function OrdersPage() {
     if (newIds.length > 0 && previousOrderIds.size > 0) {
       playNotificationSound();
       
-      // Mettre à jour le titre de l'onglet
       const pendingCount = orders.filter(o => o.status === 'pending').length;
       document.title = `(${pendingCount}) Avenue Café`;
 
-      // Defer setState calls to avoid synchronous setState in effect
       setTimeout(() => {
         setNewOrderIds(new Set(newIds));
         setTimeout(() => setNewOrderIds(new Set()), 200);
@@ -161,6 +148,23 @@ export default function OrdersPage() {
   }, [orders, previousOrderIds, playNotificationSound]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // Sélectionner automatiquement la commande Reçue la plus ancienne au premier chargement
+  useEffect(() => {
+    if (!loading && orders.length > 0 && !selectedOrder) {
+      const oldestPending = orders
+        .filter(o => o.status === 'pending')
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
+      
+      if (oldestPending) {
+        setTimeout(() => setSelectedOrder(oldestPending), 0);
+      } else {
+        // Sinon la plus récente
+        const mostRecent = orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+        setTimeout(() => setSelectedOrder(mostRecent), 0);
+      }
+    }
+  }, [loading, orders, selectedOrder]);
+
   function getOrdersByStatus(status: string): Order[] {
     if (status === 'all') return orders;
     return orders.filter(order => order.status === status);
@@ -168,72 +172,85 @@ export default function OrdersPage() {
 
   function getFilteredOrders(): Order[] {
     let filtered = orders;
-
+    
     if (filterStatus !== 'all') {
       filtered = filtered.filter(order => order.status === filterStatus);
     }
-
+    
     if (filterMode !== 'all') {
       filtered = filtered.filter(order => order.fulfillment === filterMode);
     }
 
-    // Tri : pending d'abord (du plus ancien au plus récent), puis les autres
-    const pendingOrders = filtered.filter(o => o.status === 'pending').sort((a, b) => 
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-    const otherOrders = filtered.filter(o => o.status !== 'pending').sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    // Filtrer pour n'afficher que les commandes d'aujourd'hui
+    const today = new Date().toDateString();
+    filtered = filtered.filter(order => new Date(order.createdAt).toDateString() === today);
 
-    return [...pendingOrders, ...otherOrders];
+    // Trier : Reçues d'abord (plus ancienne à plus récente), puis les autres
+    return filtered.sort((a, b) => {
+      if (a.status === 'pending' && b.status !== 'pending') return -1;
+      if (a.status !== 'pending' && b.status === 'pending') return 1;
+      if (a.status === 'pending' && b.status === 'pending') {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 
   function getPendingCount(): number {
-    return orders.filter(order => order.status === 'pending').length;
+    const today = new Date().toDateString();
+    return orders.filter(o => o.status === 'pending' && new Date(o.createdAt).toDateString() === today).length;
   }
 
   function getLastOrder(): Order | null {
-    const pendingOrders = orders.filter(order => order.status === 'pending');
-    if (pendingOrders.length === 0) return null;
-    return pendingOrders[pendingOrders.length - 1];
-  }
-
-  function getOrderAge(order: Order): string {
-    const now = new Date();
-    const created = new Date(order.createdAt);
-    const diffMs = now.getTime() - created.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-
-    if (diffMins < 1) return 'il y a moins d&apos;une minute';
-    if (diffMins === 1) return 'il y a 1 minute';
-    if (diffMins < 60) return `il y a ${diffMins} minutes`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours === 1) return 'il y a 1 heure';
-    return `il y a ${diffHours} heures`;
-  }
-
-  function isOrderOld(order: Order): boolean {
-    const now = new Date();
-    const created = new Date(order.createdAt);
-    const diffMs = now.getTime() - created.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    return diffMins > 10;
+    const today = new Date().toDateString();
+    const todayOrders = orders.filter(o => new Date(o.createdAt).toDateString() === today);
+    if (todayOrders.length === 0) return null;
+    return todayOrders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
   }
 
   function getOrderNumber(id: string): string {
-    return `#${id.slice(-4)}`;
+    const index = orders.findIndex(o => o.id === id);
+    if (index === -1) return '????';
+    return `#${String(index + 1).padStart(4, '0')}`;
   }
 
+  const getOrderAge = useCallback((order: Order): string => {
+    const diff = Date.now() - new Date(order.createdAt).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'il y a moins de 1 min';
+    if (minutes < 60) return `il y a ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `il y a ${hours} h`;
+    return `il y a ${Math.floor(hours / 24)} j`;
+  }, []);
+
+  const isOrderOld = useCallback((order: Order): boolean => {
+    const diff = Date.now() - new Date(order.createdAt).getTime();
+    return diff > ORDER_CONFIG.OLD_ORDER_THRESHOLD_MINUTES * 60 * 1000;
+  }, []);
+
   function getOldestPendingOrder(): Order | null {
-    const pendingOrders = orders.filter(order => order.status === 'pending');
-    if (pendingOrders.length === 0) return null;
-    return pendingOrders.sort((a, b) => 
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    )[0];
+    const pending = orders.filter(o => o.status === 'pending');
+    if (pending.length === 0) return null;
+    return pending.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())[0];
+  }
+
+  function handleOrderClick(order: Order) {
+    setSelectedOrder(order);
+    setIsMobileDetailOpen(true);
+  }
+
+  function handleOldestOrder() {
+    const oldest = getOldestPendingOrder();
+    if (oldest) {
+      setSelectedOrder(oldest);
+      setIsMobileDetailOpen(true);
+    }
   }
 
   async function updateOrderStatus(orderId: string, newStatus: string) {
     try {
+      setIsUpdating(true);
       const userStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
       const user = userStr ? JSON.parse(userStr) : null;
 
@@ -249,17 +266,16 @@ export default function OrdersPage() {
       });
 
       if (response.ok) {
-        fetchOrders();
+        await fetchOrders();
         if (selectedOrder?.id === orderId) {
-          const updated = await response.json();
-          setSelectedOrder(updated);
+          const updated = orders.find(o => o.id === orderId);
+          if (updated) setSelectedOrder(updated);
         }
-        setConflictError('');
       } else if (response.status === 409) {
-        setConflictError('Conflit : un autre employé a modifié cette commande. Actualisation en cours...');
+        setError('Conflit : un autre employé a modifié cette commande. Actualisation en cours...');
         setTimeout(() => {
+          setError('');
           fetchOrders();
-          setConflictError('');
         }, 2000);
       } else {
         const data = await response.json();
@@ -267,11 +283,13 @@ export default function OrdersPage() {
       }
     } catch (error) {
       console.error('Error updating order:', error);
-      setError('Erreur de connexion');
+      setError('Erreur serveur');
+    } finally {
+      setIsUpdating(false);
     }
   }
 
-  async function cancelOrder() {
+  async function cancelOrder(orderId: string) {
     if (!cancelReason.trim()) {
       setError('Le motif d\'annulation est obligatoire');
       return;
@@ -286,7 +304,7 @@ export default function OrdersPage() {
         headers['Authorization'] = `Bearer ${user.email}`;
       }
 
-      const response = await fetch(`/api/orders/${selectedOrder?.id}/cancel`, {
+      const response = await fetch(`/api/orders/${orderId}/cancel`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ reason: cancelReason }),
@@ -303,27 +321,7 @@ export default function OrdersPage() {
       }
     } catch (error) {
       console.error('Error cancelling order:', error);
-      setError('Erreur de connexion');
-    }
-  }
-
-
-
-  function handleOrderClick(order: Order) {
-    setSelectedOrder(order);
-    setIsMobileDetailOpen(true);
-  }
-
-  function handleBackToList() {
-    setIsMobileDetailOpen(false);
-    setSelectedOrder(null);
-  }
-
-  function handleOldestOrder() {
-    const oldest = getOldestPendingOrder();
-    if (oldest) {
-      setSelectedOrder(oldest);
-      setIsMobileDetailOpen(true);
+      setError('Erreur serveur');
     }
   }
 
@@ -334,142 +332,161 @@ export default function OrdersPage() {
   const filteredOrders = getFilteredOrders();
   const pendingCount = getPendingCount();
   const lastOrder = getLastOrder();
+  const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
-    <div className="min-h-screen bg-[#0B0B0B] text-white">
+    <div className="min-h-screen bg-bg-page text-text-primary">
       {/* Bannière orange */}
-      <div className="bg-[#F57C1F] px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-xl font-heading font-bold">
-              {pendingCount} commande{pendingCount !== 1 ? 's' : ''} à traiter
-            </h1>
-            {lastOrder && (
-              <div className="text-sm opacity-90">
-                <span className="font-bold">{getOrderNumber(lastOrder.id)}</span>
-                {' · '}
-                {FULFILLMENT_LABELS[lastOrder.fulfillment]}
-                {' · '}
-                {lastOrder.total} F
-                {' · '}
-                {getOrderAge(lastOrder)}
-              </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-bold min-h-[44px] transition-colors"
-              aria-label={soundEnabled ? 'Désactiver le son' : 'Activer le son'}
-            >
-              {soundEnabled ? 'Son activé' : 'Son désactivé'}
-            </button>
-            <button
-              onClick={handleOldestOrder}
-              disabled={!getOldestPendingOrder()}
-              className="bg-white/20 hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-bold min-h-[44px] transition-colors"
-            >
-              Traiter la plus ancienne
-            </button>
+      {pendingCount > 0 ? (
+        <div className="bg-orange text-orange-text rounded-[14px] px-[18px] py-[14px] mb-[22px]">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <h1 className="text-[18px] font-bold text-heading">
+                {pendingCount} commande{pendingCount !== 1 ? 's' : ''} à traiter
+              </h1>
+              {lastOrder && (
+                <div className="text-[14px] opacity-90">
+                  <span className="font-bold">{getOrderNumber(lastOrder.id)}</span>
+                  {' · '}
+                  {FULFILLMENT_LABELS[lastOrder.fulfillment]}
+                  {' · '}
+                  {lastOrder.total.toLocaleString('fr-FR')} F
+                  {' · '}
+                  {getOrderAge(lastOrder)}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className="bg-bg-page text-text-primary px-5 py-[11px] rounded-[999px] text-sm font-bold min-h-[44px] transition-colors hover:opacity-90"
+                aria-label={soundEnabled ? 'Désactiver le son' : 'Activer le son'}
+              >
+                {soundEnabled ? 'Son activé' : 'Son désactivé'}
+              </button>
+              <button
+                onClick={handleOldestOrder}
+                disabled={!getOldestPendingOrder()}
+                className="bg-white text-orange-text px-5 py-[11px] rounded-[999px] text-sm font-bold min-h-[44px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+              >
+                Traiter la plus ancienne
+              </button>
+            </div>
           </div>
         </div>
+      ) : (
+        <div className="bg-bg-card text-text-tertiary rounded-[14px] px-[18px] py-[14px] mb-[22px]">
+          Aucune commande à traiter
+        </div>
+      )}
+
+      {/* Titre et date */}
+      <div className="flex items-end justify-between mb-[14px]">
+        <h2 className="text-[44px] font-bold text-heading uppercase leading-none">COMMANDES</h2>
+        <span className="text-text-tertiary">{today}</span>
       </div>
 
-      {/* Filtres */}
-      <div className="bg-gray-900 border-b border-gray-800 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Statut :</span>
-            {[
-              { value: 'all', label: 'Toutes' },
-              { value: 'pending', label: 'Reçues' },
-              { value: 'preparing', label: 'En préparation' },
-              { value: 'ready', label: 'Prêtes' },
-              { value: 'completed', label: 'Terminées' },
-            ].map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setFilterStatus(value)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium min-h-[44px] transition-colors ${
-                  filterStatus === value
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                {label} ({getOrdersByStatus(value).length})
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Mode :</span>
-            {[
-              { value: 'all', label: 'Tous les modes' },
-              { value: 'DELIVERY', label: 'Livraison' },
-              { value: 'DINE_IN', label: 'Sur place' },
-            ].map(({ value, label }) => (
-              <button
-                key={value}
-                onClick={() => setFilterMode(value)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium min-h-[44px] transition-colors ${
-                  filterMode === value
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Filtres rangée 1 */}
+      <div className="flex flex-wrap gap-[8px] mb-[10px]">
+        {[
+          { value: 'all', label: 'Toutes' },
+          { value: 'pending', label: 'Reçues' },
+          { value: 'preparing', label: 'En préparation' },
+          { value: 'ready', label: 'Prêtes' },
+          { value: 'completed', label: 'Terminées' },
+        ].map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setFilterStatus(value)}
+            className={`px-4 py-[9px] rounded-[999px] text-[14px] font-bold min-h-[44px] border-2 transition-colors ${
+              filterStatus === value
+                ? 'bg-orange text-orange-text border-orange'
+                : 'bg-transparent text-text-primary border-border-secondary hover:border-text-secondary'
+            }`}
+          >
+            {label} ({getOrdersByStatus(value).length})
+          </button>
+        ))}
+      </div>
+
+      {/* Filtres rangée 2 */}
+      <div className="flex flex-wrap gap-[8px] mb-[22px]">
+        {[
+          { value: 'all', label: 'Tous les modes' },
+          { value: 'DELIVERY', label: 'Livraison' },
+          { value: 'DINE_IN', label: 'Sur place' },
+        ].map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => setFilterMode(value)}
+            className={`px-4 py-[9px] rounded-[999px] text-[14px] font-bold min-h-[44px] border-2 transition-colors ${
+              filterMode === value
+                ? 'bg-orange text-orange-text border-orange'
+                : 'bg-transparent text-text-primary border-border-secondary hover:border-text-secondary'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Contenu principal */}
-      <div className="p-4 flex gap-4">
+      <div className="flex gap-[22px] items-start">
         {/* File de commandes */}
-        <div className={`flex-1 ${isMobileDetailOpen ? 'hidden' : 'block'}`}>
+        <div className={`flex-1 min-w-[360px] ${isMobileDetailOpen ? 'hidden' : 'block'}`}>
           {loading ? (
-            <div className="text-center py-8">Chargement...</div>
+            <div className="space-y-[10px]">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-bg-card rounded-[14px] p-[14px] px-[16px] h-[88px]" />
+              ))}
+            </div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-center py-8 text-text-tertiary">Aucune commande aujourd&apos;hui</div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-[10px]" role="list" aria-label="Liste des commandes">
               {filteredOrders.map((order) => (
-                <motion.button
+                <button
                   key={order.id}
                   onClick={() => handleOrderClick(order)}
-                  initial={shouldReduceMotion ? {} : { opacity: 0, x: -20 }}
-                  animate={shouldReduceMotion ? {} : { opacity: 1, x: 0 }}
-                  transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
-                  className={`w-full text-left bg-gray-900 rounded-lg p-4 hover:bg-gray-800 transition-colors ${
-                    selectedOrder?.id === order.id ? 'ring-2 ring-orange-500' : ''
-                  } ${newOrderIds.has(order.id) ? 'ring-2 ring-orange-500 animate-pulse' : ''}`}
+                  className={`w-full text-left bg-bg-card rounded-[14px] p-[14px] px-[16px] border-1 border-border transition-colors hover:bg-bg-subcard focus:outline-none focus-visible:ring-2 focus-visible:ring-orange ${
+                    selectedOrder?.id === order.id ? 'bg-bg-selected border-orange' : ''
+                  } ${newOrderIds.has(order.id) ? 'animate-pulse' : ''}`}
+                  style={{ borderLeftWidth: '6px', borderLeftColor: STATUS_COLORS[order.status] }}
+                  role="listitem"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold">{getOrderNumber(order.id)}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded ${STATUS_COLORS[order.status]}`}>
-                          {STATUS_LABELS[order.status]}
-                        </span>
-                        {isOrderOld(order) && order.status === 'pending' && (
-                          <span className="text-xs text-red-500 font-bold">(!)</span>
-                        )}
+                    {/* Bloc gauche : numéro et statut */}
+                    <div className="w-16">
+                      <div className="text-[18px] font-bold">{getOrderNumber(order.id)}</div>
+                      <div className="text-[12px] font-bold" style={{ color: STATUS_COLORS[order.status] }}>
+                        {STATUS_LABELS[order.status]}
                       </div>
-                      {order.customerName && (
-                        <p className="text-sm text-gray-300">{order.customerName}</p>
-                      )}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs px-2 py-0.5 rounded ${FULFILLMENT_COLORS[order.fulfillment]}`}>
+
+                    {/* Bloc central : nom et mode */}
+                    <div className="flex-1">
+                      {order.customerName && (
+                        <p className="text-[16px] font-bold">{order.customerName}</p>
+                      )}
+                      <span className={`text-[12px] font-bold px-[10px] py-[3px] rounded-[999px] ${
+                        order.fulfillment === 'DELIVERY'
+                          ? 'border border-orange text-orange'
+                          : 'bg-bg-subcard text-text-primary'
+                      }`}>
                         {FULFILLMENT_LABELS[order.fulfillment]}
                       </span>
-                      <span className="font-bold text-orange-500">{order.total} F</span>
-                      <span className="text-xs text-gray-400">{getOrderAge(order)}</span>
+                    </div>
+
+                    {/* Bloc droite : total et ancienneté */}
+                    <div className="text-right">
+                      <div className="font-bold text-orange">{order.total.toLocaleString('fr-FR')} F</div>
+                      <div className={`text-[13px] ${isOrderOld(order) && order.status === 'pending' ? 'text-status-error' : 'text-text-tertiary'}`}>
+                        {getOrderAge(order)}
+                      </div>
                     </div>
                   </div>
-                </motion.button>
+                </button>
               ))}
-              {filteredOrders.length === 0 && (
-                <div className="text-center py-8 text-gray-400">Aucune commande</div>
-              )}
             </div>
           )}
         </div>
@@ -484,18 +501,9 @@ export default function OrdersPage() {
                 animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0 }}
                 exit={shouldReduceMotion ? undefined : { opacity: 0, x: 20 }}
                 transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
-                className="hidden lg:block w-96 bg-gray-900 rounded-lg p-6"
+                className="hidden lg:block flex-1 min-w-[480px]"
               >
-                {selectedOrder && <OrderDetail order={selectedOrder} onNextStatus={() => {
-                  const transitions = STATUS_TRANSITIONS[selectedOrder.status];
-                  if (transitions.length > 0) {
-                    updateOrderStatus(selectedOrder.id, transitions[0]);
-                  }
-                }} onCancel={() => setShowCancelModal(true)} onCall={() => {
-                  if (selectedOrder.phone) {
-                    window.location.href = `tel:${selectedOrder.phone}`;
-                  }
-                }} onPrint={() => window.print()} isManager={isManager} />}
+                {selectedOrder && <OrderDetail order={selectedOrder} isManager={isManager} onUpdate={updateOrderStatus} onCancel={() => setShowCancelModal(true)} isUpdating={isUpdating} />}
               </motion.div>
 
               {/* Mobile */}
@@ -504,31 +512,23 @@ export default function OrdersPage() {
                 animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
                 exit={shouldReduceMotion ? undefined : { opacity: 0, y: '100%' }}
                 transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
-                className={`lg:hidden fixed inset-0 bg-[#0B0B0B] z-50 ${isMobileDetailOpen ? 'block' : 'hidden'}`}
+                className={`lg:hidden fixed inset-0 bg-bg-page z-50 ${isMobileDetailOpen ? 'block' : 'hidden'}`}
               >
                 {selectedOrder && (
                   <div className="h-full flex flex-col">
-                    <div className="bg-gray-900 px-4 py-3 flex items-center gap-4 border-b border-gray-800">
+                    <div className="bg-bg-card px-4 py-3 flex items-center gap-4 border-b border-border">
                       <button
-                        onClick={handleBackToList}
-                        className="text-2xl min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        aria-label="Retour"
+                        onClick={() => setIsMobileDetailOpen(false)}
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center"
                       >
-                        ←
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
                       </button>
-                      <h2 className="font-bold">{getOrderNumber(selectedOrder.id)}</h2>
+                      <span className="font-bold">Retour</span>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4">
-                      <OrderDetail order={selectedOrder} onNextStatus={() => {
-                        const transitions = STATUS_TRANSITIONS[selectedOrder.status];
-                        if (transitions.length > 0) {
-                          updateOrderStatus(selectedOrder.id, transitions[0]);
-                        }
-                      }} onCancel={() => setShowCancelModal(true)} onCall={() => {
-                      if (selectedOrder.phone) {
-                        window.location.href = `tel:${selectedOrder.phone}`;
-                      }
-                    }} onPrint={() => window.print()} isManager={isManager} />
+                      <OrderDetail order={selectedOrder} isManager={isManager} onUpdate={updateOrderStatus} onCancel={() => setShowCancelModal(true)} isUpdating={isUpdating} />
                     </div>
                   </div>
                 )}
@@ -536,55 +536,55 @@ export default function OrdersPage() {
             </>
           )}
         </AnimatePresence>
+
+        {/* Aucune commande sélectionnée */}
+        {!selectedOrder && !isMobileDetailOpen && (
+          <div className="hidden lg:block flex-1 min-w-[480px] bg-bg-card rounded-[18px] p-6 text-center text-text-tertiary">
+            Sélectionnez une commande
+          </div>
+        )}
       </div>
 
       {/* Modal d'annulation */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-bg-overlay flex items-center justify-center p-4 z-50">
           <motion.div
             initial={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.95 }}
             animate={shouldReduceMotion ? undefined : { opacity: 1, scale: 1 }}
             transition={shouldReduceMotion ? undefined : { duration: 0.15 }}
-            className="bg-gray-900 rounded-lg p-6 max-w-md w-full"
+            className="bg-bg-card rounded-[18px] p-6 max-w-md w-full"
           >
-            <h2 className="text-xl font-bold mb-4">Annuler la commande</h2>
+            <h2 className="text-xl font-bold mb-4 text-heading">Annuler la commande</h2>
             <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Motif d&apos;annulation *</label>
+              <label className="block text-sm text-text-tertiary mb-2">Motif d&apos;annulation *</label>
               <textarea
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-orange-500 min-h-[44px]"
+                className="w-full bg-bg-subcard border border-border rounded-[12px] p-3 text-text-primary min-h-[44px]"
                 rows={3}
-                required
+                maxLength={500}
               />
             </div>
-            {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-            <div className="flex gap-3">
+            {error && <p className="text-status-error text-sm mb-4">{error}</p>}
+            <div className="flex gap-2">
               <button
                 onClick={() => {
                   setShowCancelModal(false);
                   setCancelReason('');
                   setError('');
                 }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 py-3 rounded-lg font-bold min-h-[44px]"
+                className="flex-1 bg-bg-subcard hover:bg-bg-card px-4 py-3 rounded-[12px] text-sm font-bold min-h-[44px] transition-colors"
               >
                 Annuler
               </button>
               <button
-                onClick={cancelOrder}
-                className="flex-1 bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold min-h-[44px]"
+                onClick={() => selectedOrder && cancelOrder(selectedOrder.id)}
+                className="flex-1 bg-status-error hover:opacity-90 px-4 py-3 rounded-[12px] text-sm font-bold min-h-[44px] transition-colors"
               >
                 Confirmer
               </button>
             </div>
           </motion.div>
-        </div>
-      )}
-
-      {/* Message de conflit */}
-      {conflictError && (
-        <div className="fixed top-4 right-4 bg-red-600 text-white px-6 py-4 rounded-lg shadow-lg z-50">
-          {conflictError}
         </div>
       )}
 
@@ -596,168 +596,195 @@ export default function OrdersPage() {
   );
 }
 
-function OrderDetail({ order, onNextStatus, onCancel, onCall, onPrint, isManager }: {
-  order: Order;
-  onNextStatus: () => void;
-  onCancel: () => void;
-  onCall: () => void;
-  onPrint: () => void;
-  isManager: boolean;
-}) {
-  const transitions = STATUS_TRANSITIONS[order.status];
-  const canCancel = order.status === 'pending' || (isManager && order.status === 'preparing');
+function OrderDetail({ order, isManager, onUpdate, onCancel, isUpdating }: { order: Order; isManager: boolean; onUpdate: (id: string, status: string) => void; onCancel: () => void; isUpdating: boolean }) {
+  const STATUS_LABELS: Record<string, string> = {
+    pending: 'Reçue',
+    preparing: 'En préparation',
+    ready: 'Prête',
+    completed: 'Terminée',
+    cancelled: 'Annulée',
+  };
+
+  const FULFILLMENT_LABELS: Record<string, string> = {
+    DELIVERY: 'Livraison',
+    DINE_IN: 'Sur place',
+  };
+
+  const nextStatus = {
+    pending: 'preparing',
+    preparing: 'ready',
+    ready: 'completed',
+  }[order.status] as string | undefined;
+
+  const nextActionLabel = {
+    pending: 'Accepter et lancer la préparation',
+    preparing: 'Marquer prête',
+    ready: order.fulfillment === 'DELIVERY' ? 'Marquer livrée' : 'Marquer servie',
+  }[order.status] as string | undefined;
+
+  const canCancel = order.status !== 'completed' && (order.status !== 'ready' || isManager);
 
   return (
-    <div className="space-y-6">
+    <div className="bg-bg-card border border-border rounded-[18px] p-6">
       {/* En-tête */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xl font-bold">{`#${order.id.slice(-4)}`}</h3>
-          <span className="text-sm text-gray-400">
-            {new Date(order.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </span>
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h3 className="text-[40px] font-bold text-heading uppercase leading-none mb-2">
+            COMMANDE #{order.id.slice(-4).padStart(4, '0')}
+          </h3>
+          <div className="text-[14px] text-text-tertiary">
+            {STATUS_LABELS[order.status]} à {new Date(order.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            {' · '}
+            {order.source === 'online' ? 'en ligne' : 'boutique'}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs px-2 py-0.5 rounded ${order.source === 'online' ? 'bg-blue-900 text-blue-300' : 'bg-green-900 text-green-300'}`}>
-            {order.source === 'online' ? 'En ligne' : 'Boutique'}
-          </span>
-          <span className={`text-xs px-2 py-0.5 rounded ${FULFILLMENT_COLORS[order.fulfillment]}`}>
-            {FULFILLMENT_LABELS[order.fulfillment]}
-          </span>
-        </div>
+        <span className={`text-[12px] font-bold px-[10px] py-[3px] rounded-[999px] ${
+          order.fulfillment === 'DELIVERY'
+            ? 'border border-orange text-orange'
+            : 'bg-bg-subcard text-text-primary'
+        }`}>
+          {FULFILLMENT_LABELS[order.fulfillment]}
+        </span>
       </div>
 
       {/* Parcours en 4 étapes */}
-      <div className="flex items-center justify-between">
-        {['pending', 'preparing', 'ready', 'completed'].map((status, index) => {
-          const isCurrent = order.status === status;
-          const isPast = ['pending', 'preparing', 'ready'].includes(status) && 
-            ['preparing', 'ready', 'completed'].includes(order.status);
-          
-          return (
-            <div key={status} className="flex-1 flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                isCurrent ? 'bg-orange-500' : isPast ? 'bg-green-500' : 'bg-gray-700'
-              }`}>
-                {isPast || isCurrent ? '✓' : index + 1}
+      {order.status !== 'cancelled' ? (
+        <div className="flex justify-between mb-6">
+          {['Reçue', 'En préparation', 'Prête', order.fulfillment === 'DELIVERY' ? 'Livrée' : 'Servie'].map((step, index) => {
+            const stepStatuses = ['pending', 'preparing', 'ready', 'completed'];
+            const isCurrent = stepStatuses[index] === order.status;
+            const isPast = index < stepStatuses.indexOf(order.status);
+            
+            return (
+              <div key={step} className="flex flex-col items-center flex-1">
+                <div className={`w-[34px] h-[34px] rounded-full flex items-center justify-center text-sm font-bold mb-1 ${
+                  isCurrent ? 'bg-orange text-orange-text' : isPast ? 'bg-orange text-orange-text' : 'bg-bg-subcard text-text-tertiary'
+                }`}>
+                  {isPast ? '✓' : index + 1}
+                </div>
+                <span className={`text-[13px] ${isCurrent ? 'text-text-primary font-bold' : isPast ? 'text-text-primary' : 'text-text-tertiary'}`}>
+                  {step}
+                </span>
               </div>
-              {index < 3 && <div className={`flex-1 h-1 mx-2 ${isPast ? 'bg-green-500' : 'bg-gray-700'}`} />}
-            </div>
-          );
-        })}
-      </div>
-      <div className="flex justify-between text-xs text-gray-400">
-        <span>Reçue</span>
-        <span>En préparation</span>
-        <span>Prête</span>
-        <span>{order.fulfillment === 'DELIVERY' ? 'Livrée' : 'Servie'}</span>
-      </div>
-
-      {/* Informations client */}
-      <div className="space-y-3">
-        <div>
-          <p className="text-sm text-gray-400">Client</p>
-          <p className="font-bold">{order.customerName || 'Non renseigné'}</p>
+            );
+          })}
         </div>
-        {order.phone && (
-          <div>
-            <p className="text-sm text-gray-400">Téléphone</p>
-            <a
-              href={`tel:${order.phone}`}
-              className="text-orange-500 hover:underline font-bold"
-            >
-              {order.phone}
-            </a>
-          </div>
-        )}
-        <div>
-          <p className="text-sm text-gray-400">Mode</p>
-          <p>{FULFILLMENT_LABELS[order.fulfillment]}</p>
-        </div>
-        {order.fulfillment === 'DELIVERY' && (
-          <>
-            <div>
-              <p className="text-sm text-gray-400">Adresse de livraison</p>
-              <p>{order.deliveryAddress || 'Non renseigné'}</p>
-              {order.deliveryLandmark && <p className="text-sm text-gray-400">({order.deliveryLandmark})</p>}
-            </div>
-            {order.deliveryFee && (
-              <div>
-                <p className="text-sm text-gray-400">Frais de livraison</p>
-                <p>{order.deliveryFee} F</p>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Articles */}
-      <div>
-        <p className="text-sm text-gray-400 mb-2">Articles</p>
-        <div className="space-y-2">
-          {order.items.map((item, idx) => (
-            <div key={idx} className="flex justify-between">
-              <span>{item.name} x{item.quantity}</span>
-              <span>{item.price * item.quantity} F</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Total */}
-      <div className="border-t border-gray-800 pt-4">
-        <div className="flex justify-between items-center">
-          <span className="text-xl font-bold">Total</span>
-          <span className="text-2xl font-bold text-orange-500">{order.total} F</span>
-        </div>
-      </div>
-
-      {/* Note client */}
-      {order.customerNote && (
-        <div className="bg-gray-800 rounded-lg p-3">
-          <p className="text-sm text-gray-400 mb-1">Note du client</p>
-          <p className="text-sm italic">{order.customerNote}</p>
+      ) : (
+        <div className="bg-status-error/20 border border-status-error rounded-[12px] p-4 mb-6">
+          <p className="text-status-error font-bold">Annulée</p>
+          {order.cancelReason && <p className="text-sm text-text-tertiary mt-1">{order.cancelReason}</p>}
         </div>
       )}
 
-      {/* Bouton d'action principal */}
-      {transitions.length > 0 && (
+      {/* Blocs d'information */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Client */}
+        <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Client</div>
+          <div className="text-[18px] font-bold">{order.customerName || 'Non renseigné'}</div>
+        </div>
+
+        {/* Téléphone */}
+        <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Téléphone</div>
+          {order.phone ? (
+            <a href={`tel:${order.phone}`} className="text-[18px] font-bold text-orange hover:underline">
+              {order.phone}
+            </a>
+          ) : (
+            <div className="text-[18px] font-bold text-text-tertiary">Non renseigné</div>
+          )}
+        </div>
+
+        {/* Mode */}
+        <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Mode</div>
+          <div className="text-[18px] font-bold">{FULFILLMENT_LABELS[order.fulfillment]}</div>
+        </div>
+
+        {/* Adresse ou Table */}
+        {order.fulfillment === 'DELIVERY' ? (
+          <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Adresse</div>
+            <div className="text-[18px] font-bold">{order.deliveryAddress || 'Non renseigné'}</div>
+            {order.deliveryLandmark && (
+              <div className="text-[14px] text-text-secondary mt-1">Repère : {order.deliveryLandmark}</div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+            <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Table</div>
+            <div className="text-[18px] font-bold">Non renseigné</div>
+          </div>
+        )}
+
+        {/* Paiement */}
+        <div className="col-span-2 bg-bg-subcard border border-border-subcard rounded-[12px] p-[14px] px-[16px]">
+          <div className="text-[12px] uppercase tracking-[0.08em] text-text-tertiary mb-1">Paiement</div>
+          <div className="text-[18px] font-bold">À confirmer</div>
+        </div>
+      </div>
+
+      {/* Articles */}
+      <div className="mb-6">
+        <h4 className="text-[24px] font-bold text-heading uppercase mb-3">ARTICLES</h4>
+        <div className="space-y-2">
+          {order.items.map((item, index) => (
+            <div key={index} className="flex justify-between items-center py-2 border-b border-border">
+              <span className="font-bold">
+                {item.quantity}× {item.name}
+              </span>
+              <span className="text-orange font-bold">{item.price.toLocaleString('fr-FR')} F</span>
+            </div>
+          ))}
+          <div className="flex justify-between items-center py-2 border-b border-border">
+            <span className="text-[22px] font-bold">Total</span>
+            <span className="text-[22px] font-bold text-orange">{order.total.toLocaleString('fr-FR')} F</span>
+          </div>
+          {order.deliveryFee !== null && (
+            <div className="text-[13px] text-text-tertiary py-2">
+              Frais de livraison : {order.deliveryFee.toLocaleString('fr-FR')} F
+            </div>
+          )}
+          {order.customerNote && (
+            <div className="text-[13px] text-text-tertiary py-2">
+              Note : {order.customerNote}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bouton principal */}
+      {nextActionLabel && nextStatus && (
         <button
-          onClick={onNextStatus}
-          className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-lg min-h-[44px] transition-colors"
+          onClick={() => onUpdate(order.id, nextStatus)}
+          disabled={isUpdating}
+          className="w-full bg-orange text-orange-text text-[18px] font-bold rounded-[14px] min-h-[56px] mb-3 transition-colors hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {(() => {
-            const nextStatus = transitions[0];
-            if (nextStatus === 'preparing') return 'Accepter et lancer la préparation';
-            if (nextStatus === 'ready') return 'Marquer prête';
-            if (nextStatus === 'completed') {
-              return order.fulfillment === 'DELIVERY' ? 'Marquer livrée' : 'Marquer servie';
-            }
-            return '';
-          })()}
+          {isUpdating ? 'Envoi…' : nextActionLabel}
         </button>
       )}
 
       {/* Boutons secondaires */}
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 gap-[10px]">
         {order.phone && (
-          <button
-            onClick={onCall}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 py-3 rounded-lg font-bold min-h-[44px]"
+          <a
+            href={`tel:${order.phone}`}
+            className="bg-transparent border-2 border-border-secondary text-text-primary font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-text-secondary transition-colors"
           >
             Appeler
-          </button>
+          </a>
         )}
         <button
-          onClick={onPrint}
-          className="flex-1 bg-gray-700 hover:bg-gray-600 py-3 rounded-lg font-bold min-h-[44px]"
+          onClick={() => window.print()}
+          className="bg-transparent border-2 border-border-secondary text-text-primary font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-text-secondary transition-colors"
         >
           Imprimer
         </button>
         {canCancel && (
           <button
             onClick={onCancel}
-            className="flex-1 bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold min-h-[44px]"
+            className="bg-transparent border-2 border-border-cancel text-status-error font-bold rounded-[12px] min-h-[44px] flex items-center justify-center hover:border-status-error transition-colors"
           >
             Annuler
           </button>
@@ -765,22 +792,18 @@ function OrderDetail({ order, onNextStatus, onCancel, onCall, onPrint, isManager
       </div>
 
       {/* Historique */}
-      {order.events && order.events.length > 0 && (
-        <div>
-          <p className="text-sm text-gray-400 mb-2">Historique</p>
-          <div className="space-y-2 text-sm">
-            {order.events.map((event, idx) => (
-              <div key={idx} className="text-gray-300">
-                <span className="text-gray-400">
-                  {new Date(event.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                {' - '}
-                {event.note || event.type}
-              </div>
-            ))}
-          </div>
+      <div className="border-t border-border mt-6 pt-[14px]">
+        <h4 className="text-text-primary font-bold mb-3">Historique</h4>
+        <div className="space-y-2">
+          {order.events.map((event, index) => (
+            <div key={index} className="text-[14px] text-text-tertiary leading-[1.7]">
+              {new Date(event.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+              {' · '}
+              {event.note || event.type}
+            </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }
